@@ -62,7 +62,7 @@ def get_images(response: Response):
                 {
                     'image_id': image.image_id,
                     'image_name': image.image_name,
-                    'image_url': image.image_file.url,
+                    'image_url': 'http://localhost:29083' +  image.image_file.url,
                 } for image in images
             ]
         }
