@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from data_reader.routers.images import upload_images, get_images
 from data_reader.routers.annotations import get_annotations
+from data_reader.routers.annotations import upload_annotations
 
 def create_app() -> FastAPI:
     tags_meta = [
@@ -26,7 +27,7 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json"
     )
 
-    origins = ["http://localhost:3000", "http://localhost:8085"]
+    origins = ["http://localhost:3000", "http://192.168.0.142:3000", "http://localhost:8085"]
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
@@ -38,6 +39,7 @@ def create_app() -> FastAPI:
     app.include_router(upload_images.router)
     app.include_router(get_images.router)
     app.include_router(get_annotations.router)
+    app.include_router(upload_annotations.router)
     
     return app
 

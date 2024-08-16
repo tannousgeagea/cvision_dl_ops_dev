@@ -23,9 +23,9 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    list_display = ('image_name', 'image_file', 'annotated', 'processed', 'mode')
+    list_display = ('image_name', 'image_file', 'created_at', 'annotated', 'processed', 'mode')
     search_fields = ('image_name', 'mode__mode')
-    list_filter = ('annotated', 'processed', 'mode')
+    list_filter = ('annotated', 'processed', 'mode', 'created_at')
     
 @admin.register(Annotation)
 class AnnotationAdmin(admin.ModelAdmin):

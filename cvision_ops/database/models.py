@@ -50,6 +50,7 @@ class Image(models.Model):
     image_file = models.ImageField(upload_to='images/')
     annotated = models.BooleanField(default=False)
     processed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
     mode = models.ForeignKey(ImageMode, on_delete=models.CASCADE, blank=True, null=True)
     meta_info = models.JSONField(null=True, blank=True)
     

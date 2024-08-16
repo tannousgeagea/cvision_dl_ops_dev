@@ -21,7 +21,7 @@ def get_class_id_from_file(file):
     
     return lb
 
-def load_bbx_from_file(file):
+def load_xyxy_from_file(file):
     """
     Extract bounding box data from a text file.
 
@@ -109,3 +109,27 @@ def register_annotation_into_db(image, project, annotation_file, meta_info):
         raise ValueError(f'failed to register annotation in DB: {err}')
 
     return success
+
+def load_labels(file:str):
+    """
+    Extract data from a text file.
+
+    This function reads a text file containing bounding box data. Each line in the file should 
+    represent a bounding box or a polygon, starting with a class ID followed by the vertices coordinates.
+    If a line contains more than 4 coordinates, it is treated as a polygon and converted to an axis-aligned
+    bounding box. The function returns class IDs and bounding boxes.
+
+    Parameters:
+    - txt_file (str): The path to the text file containing the bounding box data.
+
+    Returns:
+    - A tuple of two lists, the first being class IDs and 
+      the second being bounding boxes (each box either as (xmin, ymin, xmax, ymax) or as a polygon)
+    """
+    assert os.path.exists(file) ,f'File Not Found {file}'
+    
+    with open(file) as f:
+        lb = [x.split() for x in f.read().strip().splitlines() if len(x)]
+        
+    return lb
+    

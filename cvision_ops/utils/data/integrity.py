@@ -17,3 +17,9 @@ def validate_annotation_exists(image, project):
         return True
 
     return False
+
+def validate_project_exists(project_name):
+    if Project.objects.filter(project_name=project_name).exists():
+        return True
+    
+    return False

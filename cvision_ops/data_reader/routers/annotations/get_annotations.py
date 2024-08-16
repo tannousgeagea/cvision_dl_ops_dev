@@ -11,12 +11,13 @@ from fastapi import HTTPException
 from database.models import Project
 from datetime import date, timezone
 from fastapi.routing import APIRoute
-from fastapi import File, UploadFile
 from fastapi import Depends, Form, Body
 from datetime import datetime, timedelta
-from utils.data.annotation.core import save_annotation
-from utils.data.annotation.raw import save_raw_annotation
 from typing import Callable, Optional, Dict, AnyStr, Any, List
+from database.models import Project, Annotation
+from utils.data.integrity import validate_project_exists
+from utils.data.annotation.utils import load_labels
+
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -44,144 +45,55 @@ router = APIRouter(
 )
 
 
-class ApiRequest(BaseModel):
-    project_name: str = File(...)
-    
-
 @router.api_route(
-    "/annotations/metadata", methods=["GET"], tags=["Annotations"]
+    "/annotations/{project_name}", methods=["GET"], tags=["Annotations"]
 )
-def get_annotations_metadata(response: Response):
+def get_annotations(response: Response, project_name:str):
     results = {}
     try:
+        if not validate_project_exists(project_name=project_name):
+            results['error'] = {
+                'status_code': 'not found',
+                'status_description': f'project_name {project_name} not found',
+                'detail': f'project_name {project_name} not found in db',
+            }
+            
+            response.status_code = status.HTTP_404_NOT_FOUND
+            return results
         
-        image_meta = Image._meta.get_fields()
+        project = Project.objects.get(project_name=project_name)
+        annotations = Annotation.objects.filter(project=project)
+        data = []
+        for annotation in annotations:
+            
+            lb = load_labels(file=annotation.annotation_file.url)
+            
+            objects = []
+            class_names = project.annotation_group.split('-')
+            for xy in lb:
+                objects.append(
+                    {
+                        'class_id': xy[0],
+                        'class_name': class_names[int(xy[0])],
+                        'xyn': [(xy[1:][i], xy[1:][i+1]) for i in range(0, len(xy[1:]), 2)],
+                    }
+                )
+            
+            data.append(
+                {
+                    'image': annotation.image.image_name,
+                    'annotation_file': annotation.annotation_file.url,
+                    'class_id': list(annotation.meta_info.get('class_id', {}).keys()),
+                    'objects': objects,
+                }
+            )
+    
+
         results = {
-            'metadata': {
-                'columns': [i.name for i in image_meta]
-            }
+            'project_name': project_name,
+            'project_type': project.project_type.project_type,
+            'data': data, 
         }
-        
-        return results
-    
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    
-    
-@router.api_route(
-    "/annotations", methods=["POST"], tags=["Annotations"]
-)
-def upload_annotations(response: Response, files: list[UploadFile] = File(...), request: ApiRequest = Depends()):
-    results = {
-        'status_code': 'ok',
-        'status_description': '',
-        'details': []
-    }
-    
-    try:
-        if not files:
-            results['error'] = {
-                'status_code': 'bad-request',
-                'status_description': f'No files included in the request',
-                'details': f'No files included in the request',
-            }
-            response.status_code = status.HTTP_400_BAD_REQUEST
-            return results
-            
-        if not Project.objects.filter(project_name=request.project_name).exists():
-            results['error'] = {
-                'status_code': 'bad-request',
-                'status_description': f'Project name {request.project_name} does not exist',
-                'details': f'Project name {request.project_name} does not exist',
-            }
-            response.status_code = status.HTTP_400_BAD_REQUEST
-            return results
-        
-        failed_annotations = []
-        saved_annotations = []
-        for file in files:
-            success, result = save_annotation(file=file, project_name=request.project_name)
-            if not success:
-                failed_annotations.append(result)
-                continue
-            
-            results['details'].append(result)
-            saved_annotations.append(file.filename)
-        
-        if failed_annotations:
-            results['status_code'] = 'partial-success'
-            results['status_description'] = f'{len(saved_annotations)} images uploaded successfully, {len(failed_annotations)} images failed'
-            results['details'].extend(failed_annotations)
-        else:
-            results['status_description'] = f'{len(saved_annotations)} images uploaded successfully'
-        
-    except HTTPException as e:
-        results['error'] = {
-            "status_code": "not found",
-            "status_description": "Request not Found",
-            "detail": f"{e}",
-        }
-        
-        response.status_code = status.HTTP_404_NOT_FOUND
-    
-    except Exception as e:
-        results['error'] = {
-            'status_code': 'server-error',
-            "status_description": f"Internal Server Error",
-            "detail": str(e),
-        }
-        
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-    
-    return results
-
-
-
-class ApiRequest(BaseModel):
-    project_name: str
-    data: List[Dict] 
-
-@router.api_route(
-    "/annotations/raw", methods=["POST"], tags=["Annotations"]
-)
-def upload_raw_annotations(response: Response, request: ApiRequest = Depends()):
-    results = {
-        'status_code': 'ok',
-        'status_description': '',
-        'details': []
-    }
-    try:    
-        
-        if not Project.objects.filter(project_name=request.project_name).exists():
-            results['error'] = {
-                'status_code': 'bad-request',
-                'status_description': f'Project name {request.project_name} does not exist',
-                'details': f'Project name {request.project_name} does not exist',
-            }
-            response.status_code = status.HTTP_400_BAD_REQUEST
-            return results
-        
-        project = Project.objects.get(project_name=request.project_name)
-        
-        failed_annotations = []
-        saved_annotations = []
-        for data in request.data:            
-            success, result = save_raw_annotation(data=data, project=project)
-            
-            if not success:
-                failed_annotations.append(result)
-                continue
-            
-            results['details'].append(result)
-            saved_annotations.append(data['filename'])
-        
-        if failed_annotations:
-            results['status_code'] = 'partial-success'
-            results['status_description'] = f'{len(saved_annotations)} images uploaded successfully, {len(failed_annotations)} images failed'
-            results['details'].extend(failed_annotations)
-        else:
-            results['status_description'] = f'{len(saved_annotations)} images uploaded successfully'
-        
     except HTTPException as e:
         results['error'] = {
             "status_code": "not found",

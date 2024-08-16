@@ -63,6 +63,9 @@ def get_images(response: Response):
                     'image_id': image.image_id,
                     'image_name': image.image_name,
                     'image_url': 'http://localhost:29083' +  image.image_file.url,
+                    'created_at': image.created_at.strftime(DATETIME_FORMAT),
+                    'plant': image.meta_info.get('plant'),
+                    'edge_box': image.meta_info.get('edge_box'),
                 } for image in images
             ]
         }
