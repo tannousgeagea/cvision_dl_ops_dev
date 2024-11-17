@@ -19,9 +19,8 @@ from fastapi import status
 from fastapi import File, UploadFile
 from pathlib import Path
 from pydantic import BaseModel
-
-from database.models import Image
-
+from django.conf import settings
+from utils.data.image import save_image
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -42,50 +41,25 @@ class TimedRoute(APIRoute):
 
 
 router = APIRouter(
-    prefix="/api/v1",
-    tags=["Images"],
     route_class=TimedRoute,
-    responses={404: {"description": "Not found"}},
 )
-
-
 
 @router.api_route(
-    "/images", methods=["GET"], tags=["Images"]
+    "/images/metadata", methods=["GET"], tags=["Images"]
 )
-def get_images(response: Response):
+def get_images_metadata(response: Response):
     results = {}
     try:
-        images = Image.objects.all()
+        
         results = {
-            'data': [
-                {
-                    'image_id': image.image_id,
-                    'image_name': image.image_name,
-                    'image_url': 'http://localhost:29083' +  image.image_file.url,
-                    'created_at': image.created_at.strftime(DATETIME_FORMAT),
-                    'plant': image.meta_info.get('plant'),
-                    'edge_box': image.meta_info.get('edge_box'),
-                } for image in images
-            ]
-        }
-    
-    except HTTPException as e:
-        results['error'] = {
-            "status_code": "not found",
-            "status_description": "Request not Found",
-            "detail": f"{e}",
+            'metadata': {
+                'columns': []
+            }
         }
         
-        response.status_code = status.HTTP_404_NOT_FOUND
+        return results
     
     except Exception as e:
-        results['error'] = {
-            'status_code': 'server-error',
-            "status_description": f"Internal Server Error",
-            "detail": str(e),
-        }
-        
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        raise HTTPException(status_code=404, detail=str(e))
     
-    return results 
+

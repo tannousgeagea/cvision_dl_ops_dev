@@ -41,38 +41,12 @@ class TimedRoute(APIRoute):
 
 
 router = APIRouter(
-    prefix="/api/v1",
-    tags=["Images"],
     route_class=TimedRoute,
-    responses={404: {"description": "Not found"}},
 )
 
 
 class ApiRequest(BaseModel):
-    edge_box:str
-    location:str
-    plant:str
-    # meta_info: Optional[Dict[AnyStr, Any]] = None
-    
-
-@router.api_route(
-    "/images/metadata", methods=["GET"], tags=["Images"]
-)
-def get_images_metadata(response: Response):
-    results = {}
-    try:
-        
-        results = {
-            'metadata': {
-                'columns': []
-            }
-        }
-        
-        return results
-    
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    
+    source_of_origin:Optional[str] = None
     
 @router.api_route(
     "/images", methods=["POST"], tags=["Images"]
@@ -99,7 +73,7 @@ def upload_images(response: Response, files: list[UploadFile] = File(...), reque
         saved_images = []
         for file in files:
             try:
-                success, result = save_image(file=file, meta_info=request.dict())
+                success, result = save_image(file=file, source=request.source_of_origin, meta_info=request.dict())
                 if not success:
                     failed_images.append(result)
                     continue

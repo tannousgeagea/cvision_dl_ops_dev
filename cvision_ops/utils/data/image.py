@@ -7,16 +7,21 @@ django.setup()
 from pathlib import Path
 from fastapi import UploadFile
 from django.conf import settings
-from database.models import Image
+from images.models import Image
+from tenants.models import (
+    EdgeBox
+)
+
 from .integrity import validate_image_exists
 
-def register_image_into_db(image_id, image_name, image_file, meta_info:dict=None):
+def register_image_into_db(image_id, image_name, image_file, source=None, meta_info:dict=None):
     success = False
     try:
         image = Image(
             image_name=image_name,
             image_id= image_id,
             image_file=image_file,
+            source_of_origin=source,
             meta_info=meta_info
         )
         image.save()
@@ -42,7 +47,7 @@ def save_image_file(file_path:str, file:UploadFile):
     
     return success 
 
-def save_image(file, meta_info:dict=None):
+def save_image(file, source=None, meta_info:dict=None):
     success = False
     try:
         file_ext = f".{file.filename.split('.')[-1]}"
@@ -65,6 +70,7 @@ def save_image(file, meta_info:dict=None):
             image_id=str(uuid.uuid4()),
             image_name=filename,
             image_file=f'images/{file.filename}',
+            source=source,
             meta_info=meta_info,
         )    
 
