@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'storages',
     'users',
     'metadata',
     'tenants',
@@ -90,6 +91,49 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# # Azure Storage Configuration
+# AZURE_ACCOUNT_NAME = "wacoreblob"
+# AZURE_CUSTOM_DOMAIN = f'{AZURE_ACCOUNT_NAME}.blob.core.windows.net'
+# AZURE_ACCOUNT_URL = "https://wacoreblob.blob.core.windows.net/cvisionops"
+# AZURE_ACCOUNT_KEY = "sp=rcw&st=2024-11-20T10:49:39Z&se=2024-12-06T18:49:39Z&spr=https&sv=2022-11-02&sr=c&sig=FnpYkqVONGRwssglNjzH0WJFxX2yMhAArrF93L4NKxs%3D"
+# AZURE_CONTAINER = "cvisionops/media"
+# AZURE_URL_EXPIRATION_SECS = 3600 
+# AZURE_SAS_TOKEN = "https://wacoreblob.blob.core.windows.net/cvisionops?sp=rcw&st=2024-11-20T10:49:39Z&se=2024-12-06T18:49:39Z&spr=https&sv=2022-11-02&sr=c&sig=FnpYkqVONGRwssglNjzH0WJFxX2yMhAArrF93L4NKxs%3D"
+
+
+
+# AZURE_CONNECTION_STRING = (
+#     f"DefaultEndpointsProtocol=https;"
+#     f"AccountName={AZURE_ACCOUNT_NAME};"
+#     f"AccountKey={AZURE_ACCOUNT_KEY};"
+#     f"EndpointSuffix=core.windows.net;"
+#     f"BlobEndpoint=https://wacoreblob.blob.core.windows.net/cvisionops"
+# )
+
+# STORAGES = {
+#     "default": {
+#         "BACKEND": "storages.backends.azure_storage.AzureStorage",
+#         "OPTIONS": {
+#             # "account_name": AZURE_ACCOUNT_NAME,
+#             # "account_key": AZURE_ACCOUNT_KEY,
+#             # "connection_string": AZURE_CONNECTION_STRING,
+#             'sas_token': AZURE_SAS_TOKEN,
+#             "azure_container": AZURE_CONTAINER,
+#         },
+#     },
+#     "staticfiles": {
+#         "BACKEND": "storages.backends.azure_storage.AzureStorage",
+#         "OPTIONS": {
+#             # "account_name": AZURE_ACCOUNT_NAME,
+#             # "account_key": AZURE_ACCOUNT_KEY,
+#             # "connection_string": AZURE_CONNECTION_STRING,
+#             'sas_token': AZURE_SAS_TOKEN,
+#             "azure_container": "cvisionops/test",
+#         },
+#     },
+# }
+
 
 
 # Password validation

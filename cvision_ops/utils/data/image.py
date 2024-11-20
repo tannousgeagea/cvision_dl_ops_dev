@@ -12,24 +12,42 @@ from tenants.models import (
     EdgeBox
 )
 
+from django.core.files.base import ContentFile
 from .integrity import validate_image_exists
 
-def register_image_into_db(image_id, image_name, image_file, source=None, meta_info:dict=None):
+def register_image_into_db(file, source=None, meta_info:dict=None):
     success = False
+    result = ''
     try:
+        file_ext = f".{file.filename.split('.')[-1]}"
+        filename = file.filename.split(file_ext)[0]
+        if validate_image_exists(filename=filename):
+            result = {
+                'filename': file.filename,
+                'status': 'failed',
+                'reason': 'Image already exists'
+            }
+            
+            return success, result
+        
+        file_content = file.file.read()
         image = Image(
-            image_name=image_name,
-            image_id= image_id,
-            image_file=image_file,
+            image_name=filename,
+            image_id=str(uuid.uuid4()),
             source_of_origin=source,
             meta_info=meta_info
         )
+        image.image_file.save(
+            file.filename, 
+            ContentFile(file_content)
+            )
         image.save()
         success = True
+        result = 'success'
     except Exception as err:
         raise ValueError(f'failed to register image into db: {err}')
     
-    return success
+    return success, result
     
 def save_image_file(file_path:str, file:UploadFile):
     success = False
@@ -50,32 +68,17 @@ def save_image_file(file_path:str, file:UploadFile):
 def save_image(file, source=None, meta_info:dict=None):
     success = False
     try:
-        file_ext = f".{file.filename.split('.')[-1]}"
-        filename = file.filename.split(file_ext)[0]
-        if validate_image_exists(filename=filename):
-            result = {
-                'filename': filename,
-                'status': 'failed',
-                'reason': 'Image already exists'
-            }
-            
-            return success, result
-        
-        file_path = settings.MEDIA_ROOT + "/images"
-        save_image_file(
-            file_path=file_path, file=file
-        )    
-        
-        register_image_into_db(
-            image_id=str(uuid.uuid4()),
-            image_name=filename,
-            image_file=f'images/{file.filename}',
+        success, result = register_image_into_db(
+            file=file,
             source=source,
             meta_info=meta_info,
-        )    
+        ) 
 
+        if not success:
+            return success, result
+        
         result = {
-            'filename': filename,
+            'filename': file.filename,
             'status': 'success',
             }
         

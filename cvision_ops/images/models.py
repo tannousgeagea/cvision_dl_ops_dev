@@ -25,6 +25,7 @@ class Image(models.Model):
     source_of_origin = models.CharField(max_length=255, null=True, blank=True)
     mode = models.ForeignKey(ImageMode, on_delete=models.CASCADE, blank=True, null=True)
     meta_info = models.JSONField(null=True, blank=True)
+    edge_box = models.ForeignKey(EdgeBox, on_delete=models.SET_NULL, null=True)  # New relationship
     
     class Meta:
         db_table = 'image'

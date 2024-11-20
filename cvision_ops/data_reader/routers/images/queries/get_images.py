@@ -5,6 +5,7 @@ import time
 import django
 import shutil
 django.setup()
+from django.db.models import Q
 from datetime import datetime, timedelta
 from datetime import date, timezone
 from typing import Callable, Optional, Dict, AnyStr, Any
@@ -18,6 +19,11 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from images.models import Image
+from tenants.models import (
+    Tenant,
+    Plant,
+    EdgeBox,
+)
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -47,10 +53,33 @@ router = APIRouter(
 @router.api_route(
     "/images", methods=["GET"], tags=["Images"]
 )
-def get_images(response: Response):
+def get_images(
+    response: Response,
+    edge_box_id:str=None,
+    plant:str=None,
+    location:str=None,
+    created_at:datetime=None,
+    ):
     results = {}
     try:
-        images = Image.objects.all()
+        lookup_filter = Q()
+        if edge_box_id:
+            edge_box = EdgeBox.objects.get(edge_box_id=edge_box_id)
+            lookup_filter &= Q(('edge_box', edge_box)) 
+        
+        if plant:
+            plant = Plant.objects.get(plant_name=plant)
+            edge_boxes = EdgeBox.objects.filter(plant=plant)
+            lookup_filter &= Q(('edge_box__in', edge_boxes))
+
+        if location:
+            edge_box = EdgeBox.objects.get(edge_box_location=location)
+            lookup_filter &= Q(('edge_box', edge_box)) 
+            
+        if created_at:
+            lookup_filter &= Q('created_at', created_at.replace(tzinfo=timezone.utc))
+            
+        images = Image.objects.filter(lookup_filter)
         results = {
             'data': [
                 {
@@ -58,8 +87,8 @@ def get_images(response: Response):
                     'image_name': image.image_name,
                     'image_url': 'http://localhost:29083' +  image.image_file.url,
                     'created_at': image.created_at.strftime(DATETIME_FORMAT),
-                    'plant': image.meta_info.get('plant'),
-                    'edge_box': image.meta_info.get('edge_box'),
+                    'plant': EdgeBox.objects.get(edge_box_id=image.source_of_origin).plant.plant_name if EdgeBox.objects.filter(edge_box_id=image.source_of_origin).exists() else None,
+                    'edge_box': image.source_of_origin,
                 } for image in images
             ]
         }

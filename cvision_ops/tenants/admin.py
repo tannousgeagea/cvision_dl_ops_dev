@@ -16,6 +16,10 @@ class DomainInline(TabularInline):
     extra = 1
     fields = ('domain_name',)
     show_change_link = True
+
+class EdgeBoxInline(TabularInline):
+    model = EdgeBox
+    extra = 1
     
 @admin.register(Tenant)
 class TenantAdmin(ModelAdmin):
@@ -31,6 +35,7 @@ class PlantAdmin(ModelAdmin):
     list_filter = ('is_active', 'language')
     search_fields = ('plant_name', 'location')
     ordering = ('plant_name',)
+    inlines = [EdgeBoxInline]
 
 @admin.register(Domain)
 class DomainAdmin(ModelAdmin):

@@ -12,4 +12,4 @@ class ImageModeAdmin(ModelAdmin):
 class ImageAdmin(ModelAdmin):
     list_display = ('image_name', 'image_file', 'created_at', 'annotated', 'processed', 'mode')
     search_fields = ('image_name', 'mode__mode')
-    list_filter = ('annotated', 'processed', 'mode', 'created_at')
+    list_filter = ('annotated', 'processed', 'mode', 'created_at', 'source_of_origin')
