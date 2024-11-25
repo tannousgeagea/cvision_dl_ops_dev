@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'metadata',
     'tenants',
     'images',
+    'projects',
     'database',
 ]
 
@@ -311,6 +312,26 @@ UNFOLD = {
                         "icon": 'imagesmode',
                         "link": reverse_lazy(
                             "admin:images_imagemode_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("Images"),
+                        "icon": 'image',
+                        "link": reverse_lazy(
+                            "admin:images_image_changelist"
+                        ),
+                    },
+                ]
+            },
+            {
+                "title": _("Projects"),
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Project Types"),
+                        "icon": 'imagesmode',
+                        "link": reverse_lazy(
+                            "admin:projects_projecttype_changelist"
                         ),
                     },
                     {

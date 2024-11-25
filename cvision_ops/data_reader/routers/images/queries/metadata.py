@@ -16,14 +16,16 @@ from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from fastapi import status
-from fastapi import File, UploadFile
 from pathlib import Path
-from pydantic import BaseModel
-from django.conf import settings
-from utils.data.image import save_image
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
+from tenants.models import (
+    Tenant,
+    EdgeBox,
+    Plant,
+    Domain,
+)
 class TimedRoute(APIRoute):
     def get_route_handler(self) -> Callable:
         original_route_handler = super().get_route_handler()
@@ -47,13 +49,57 @@ router = APIRouter(
 @router.api_route(
     "/images/metadata", methods=["GET"], tags=["Images"]
 )
-def get_images_metadata(response: Response):
+def get_images_metadata(
+    response: Response,
+    plant:str=None,
+    ):
     results = {}
     try:
+        if not plant:
+            plants = Plant.objects.all()
+        else:
+            plants = Plant.objects.filter(plant_name=plant)
+            
+        filters = []
+        filters.append(
+            {
+                "key": 'plant',
+                "title": 'Plant',
+                "description": "",
+                "placeholder": "Plant",
+                "type": "select",
+                "items": [
+                    {
+                        "key": plant.plant_name,
+                        "value": plant.plant_name,
+                    } for plant in plants
+                ]
+            }
+        )
         
+        filters.append(
+            {
+                "key": 'location',
+                "title": 'Location',
+                "description": "",
+                "placeholder": "Location",
+                "type": "select",
+                "items": [
+                    {
+                        "key": "Gate 3",
+                        "value": "Gate 3",
+                    },
+                    {
+                        "key": "Gate 4",
+                        "value": "Gate 4",
+                    }
+                ]
+            }
+        )
         results = {
-            'metadata': {
-                'columns': []
+            'data': {
+                'columns': [],
+                'filters': filters,
             }
         }
         

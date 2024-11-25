@@ -55,26 +55,38 @@ router = APIRouter(
 )
 def get_images(
     response: Response,
-    edge_box_id:str=None,
+    image_id:str=None,
     plant:str=None,
     location:str=None,
     created_at:datetime=None,
     ):
     results = {}
     try:
-        lookup_filter = Q()
-        if edge_box_id:
-            edge_box = EdgeBox.objects.get(edge_box_id=edge_box_id)
-            lookup_filter &= Q(('edge_box', edge_box)) 
+        if image_id:
+            image = Image.objects.get(image_id=image_id)
+            return {
+                "data": [
+                    { 
+                        'image_id': image.image_id,
+                        'image_name': image.image_name,
+                        'image_url': 'http://localhost:29083' +  image.image_file.url,
+                        'created_at': image.created_at.strftime(DATETIME_FORMAT),
+                        'plant': EdgeBox.objects.get(edge_box_id=image.source_of_origin).plant.plant_name if EdgeBox.objects.filter(edge_box_id=image.source_of_origin).exists() else None,
+                        'edge_box': image.edge_box.edge_box_id if image.edge_box else None,
+                        'location': image.edge_box.edge_box_location if image.edge_box else None,       
+                    }
+                ]
+            }
         
+        lookup_filter = Q()
         if plant:
             plant = Plant.objects.get(plant_name=plant)
-            edge_boxes = EdgeBox.objects.filter(plant=plant)
-            lookup_filter &= Q(('edge_box__in', edge_boxes))
-
-        if location:
-            edge_box = EdgeBox.objects.get(edge_box_location=location)
-            lookup_filter &= Q(('edge_box', edge_box)) 
+            if location:
+                edge_box = EdgeBox.objects.get(edge_box_location=location, plant=plant)
+                lookup_filter &= Q(('edge_box', edge_box))
+            else:
+                edge_boxes = EdgeBox.objects.filter(plant=plant)
+                lookup_filter &= Q(('edge_box__in', edge_boxes))
             
         if created_at:
             lookup_filter &= Q('created_at', created_at.replace(tzinfo=timezone.utc))
@@ -88,7 +100,8 @@ def get_images(
                     'image_url': 'http://localhost:29083' +  image.image_file.url,
                     'created_at': image.created_at.strftime(DATETIME_FORMAT),
                     'plant': EdgeBox.objects.get(edge_box_id=image.source_of_origin).plant.plant_name if EdgeBox.objects.filter(edge_box_id=image.source_of_origin).exists() else None,
-                    'edge_box': image.source_of_origin,
+                    'edge_box': image.edge_box.edge_box_id if image.edge_box else None,
+                    'location': image.edge_box.edge_box_location if image.edge_box else None,
                 } for image in images
             ]
         }
