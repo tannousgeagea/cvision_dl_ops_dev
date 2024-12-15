@@ -25,6 +25,9 @@ services:
       - .:/home/$user/src
       - /media/$user/cvision-mlops-media:/media/
     user: ${user}
+    depends_on:
+      - rabbitmq
+      - postgres
 
   # RabbitMQ Service
   rabbitmq:
@@ -45,6 +48,23 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
 
+  postgres:
+    image: postgres:latest
+    container_name: cvision-ops-postgres
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    networks:
+     - internal
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
 networks:
   internal:
     driver: bridge 
+
+volumes:
+  postgres_data:
