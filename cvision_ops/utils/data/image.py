@@ -37,6 +37,12 @@ def register_image_into_db(file, source=None, meta_info:dict=None):
             source_of_origin=source,
             meta_info=meta_info
         )
+        # save_image_file(
+        #     file_path=f"/media/images",
+        #     file=file, 
+        # )
+        
+        # image.image_file = f"images/{file.filename}"
         image.image_file.save(
             file.filename, 
             ContentFile(file_content)

@@ -1,6 +1,6 @@
 # This is an auto generated Dockerfile for ros:perception
 # generated from docker_images/create_ros_image.Dockerfile.em
-FROM nvidia/cuda:12.5.1-cudnn-runtime-ubuntu22.04
+FROM ubuntu:22.04
 
 # Maintainer instructions has been deprecated, instead use LABEL
 LABEL maintainer="tannous.geagea@wasteant.com"
@@ -48,9 +48,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -q -y --no-
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install libraries
-RUN pip3 install ultralytics
+# RUN pip3 install ultralytics
 RUN pip3 install opencv-python
-RUN pip3 install albumentations
+# RUN pip3 install albumentations
 RUN pip3 install natsort
 RUN pip3 install schedule
 RUN pip3 install numpy
@@ -77,6 +77,8 @@ RUN pip3 install grpcio
 RUN pip3 install grpcio-tools
 RUN pip3 install confluent-kafka
 RUN pip3 install scp
+RUN pip3 install django-unfold
+RUN pip3 install django-storages[azure]
 
 # upgrade everything
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get upgrade -q -y \

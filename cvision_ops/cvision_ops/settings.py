@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure--ymmm380tdk@rm=en@8e8!qeh2%80*cx!3o98-#-#+h6i$3t*3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [os.getenv('ALLOWED_HOSTS', '0.0.0.0')]
 
 
 # Application definition
@@ -94,35 +94,36 @@ DATABASES = {
 }
 
 # # Azure Storage Configuration
-AZURE_ACCOUNT_NAME = "wacoreblob"
-AZURE_ACCOUNT_KEY = os.getenv("AZURE_ACCOUNT_KEY")
-AZURE_CONTAINER = "cvisionops/media"
-AZURE_URL_EXPIRATION_SECS = 3600 
+if os.getenv('DJANGO_STORAGE', 'local') == "azure":
+    AZURE_ACCOUNT_NAME = "wacoreblob"
+    AZURE_ACCOUNT_KEY = os.getenv("AZURE_ACCOUNT_KEY")
+    AZURE_CONTAINER = "cvisionops/media"
+    AZURE_URL_EXPIRATION_SECS = 3600 
 
-AZURE_CONNECTION_STRING = (
-    f"DefaultEndpointsProtocol=https;"
-    f"AccountName={AZURE_ACCOUNT_NAME};"
-    f"AccountKey={AZURE_ACCOUNT_KEY};"
-    f"EndpointSuffix=core.windows.net;"
-    f"BlobEndpoint=https://wacoreblob.blob.core.windows.net/cvisionops"
-)
+    AZURE_CONNECTION_STRING = (
+        f"DefaultEndpointsProtocol=https;"
+        f"AccountName={AZURE_ACCOUNT_NAME};"
+        f"AccountKey={AZURE_ACCOUNT_KEY};"
+        f"EndpointSuffix=core.windows.net;"
+        f"BlobEndpoint=https://wacoreblob.blob.core.windows.net/cvisionops"
+    )
 
-STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.azure_storage.AzureStorage",
-        "OPTIONS": {
-            "connection_string": AZURE_CONNECTION_STRING,
-            "azure_container": AZURE_CONTAINER,
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.azure_storage.AzureStorage",
+            "OPTIONS": {
+                "connection_string": AZURE_CONNECTION_STRING,
+                "azure_container": AZURE_CONTAINER,
+            },
         },
-    },
-    "staticfiles": {
-        "BACKEND": "storages.backends.azure_storage.AzureStorage",
-        "OPTIONS": {
-            "connection_string": AZURE_CONNECTION_STRING,
-            "azure_container": "cvisionops/static",
+        "staticfiles": {
+            "BACKEND": "storages.backends.azure_storage.AzureStorage",
+            "OPTIONS": {
+                "connection_string": AZURE_CONNECTION_STRING,
+                "azure_container": "cvisionops/static",
+            },
         },
-    },
-}
+    }
 
 
 

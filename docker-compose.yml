@@ -3,8 +3,8 @@ version: '3.3'
 services:
   # computing unit
   cvision-dl-ops:
-    image: wasteant/wasteant:cvision-dl-ops-ubuntu.22.04-cuda.12.5.1-dev
-    container_name: cvision-dl-ops-incremental-learning-core
+    image: tannous/tannous:cvision-ops-ubuntu.22.04
+    container_name: cvision-ops-core
     stdin_open: true # docker run -i
     tty: true        # docker run -t
     build:
@@ -14,7 +14,10 @@ services:
         userid: ${userid}
         group: ${group}
         groupid: ${groupid}
-    network_mode: host
+    networks:
+      - internal
+    ports:
+      - 29082-29085:29082-29085
     env_file: .env
     restart: unless-stopped
     working_dir: /home/$user/src
@@ -26,7 +29,7 @@ services:
   # RabbitMQ Service
   rabbitmq:
     image: "rabbitmq:3-management-alpine"
-    container_name: cvision-dl-ops-incremental-learning-rabbitmq
+    container_name: cvision-ops-rabbitmq
     env_file: .env
     ports:
       - "${RABBITMQ_PORT}:5672"
@@ -35,7 +38,7 @@ services:
       - .docker-conf/rabbitmq/data/:/var/lib/rabbitmq
       - .docker-conf/rabbitmq/log/:/var/log/rabbitmq
     networks:
-      - rabbitmq-cvision-dl-ops-incremental-learning
+      - internal
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_VHOST: "/"
@@ -43,5 +46,5 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
 
 networks:
-  rabbitmq-cvision-dl-ops-incremental-learning:
+  internal:
     driver: bridge 
