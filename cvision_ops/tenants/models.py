@@ -73,3 +73,19 @@ class EdgeBox(models.Model):
 
     def __str__(self):
         return f"{self.edge_box_id} - {self.edge_box_location}"
+
+class SensorBox(models.Model):
+    edge_box = models.ForeignKey(EdgeBox, on_delete=models.RESTRICT)
+    sensor_box_name = models.CharField(max_length=255)
+    sensor_box_location = models.CharField(max_length=255)  # E.g., 'front', 'top', 'bunker'
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    meta_info = models.JSONField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'sensor_box'
+        unique_together = ('edge_box', 'sensor_box_name')
+        verbose_name_plural = 'Sensor Boxes'
+
+    def __str__(self):
+        return f"{self.sensor_box_name} at {self.sensor_box_location} ({self.edge_box})"

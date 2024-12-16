@@ -1,7 +1,11 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
 from unfold.admin import TabularInline, StackedInline
-from .models import Tenant, Plant, Domain, EdgeBox
+from .models import Tenant, Plant, Domain, EdgeBox, SensorBox
+
+class SensorBoxInline(TabularInline):
+    model = SensorBox
+    extra = 1
 
 # Inline for Plant in Tenant Admin
 class PlantInline(TabularInline):
@@ -48,3 +52,13 @@ class EdgeBoxAdmin(ModelAdmin):
     list_display = ('edge_box_id', 'edge_box_location', 'plant', 'created_at')
     list_filter = ('plant__plant_name',)
     search_fields = ('edge_box_id', 'edge_box_location')
+    inlines = [SensorBoxInline]
+    
+@admin.register(SensorBox)
+class SensorBoxAdmin(ModelAdmin):
+    """
+    Admin interface for the PlantEntity model.
+    """
+    list_display = ("edge_box", "sensor_box_name", 'sensor_box_location', 'created_at')
+    list_filter = ('edge_box', 'created_at',)
+    search_fields = ('sensor_box_location', )

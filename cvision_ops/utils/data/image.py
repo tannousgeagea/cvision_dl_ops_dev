@@ -9,7 +9,8 @@ from fastapi import UploadFile
 from django.conf import settings
 from images.models import Image
 from tenants.models import (
-    EdgeBox
+    EdgeBox, 
+    SensorBox,
 )
 
 from django.core.files.base import ContentFile
@@ -35,7 +36,8 @@ def register_image_into_db(file, source=None, meta_info:dict=None):
             image_name=filename,
             image_id=str(uuid.uuid4()),
             source_of_origin=source,
-            meta_info=meta_info
+            meta_info=meta_info,
+            sensorbox=SensorBox.objects.filter(sensor_box_name=source).first()
         )
         # save_image_file(
         #     file_path=f"/media/images",
