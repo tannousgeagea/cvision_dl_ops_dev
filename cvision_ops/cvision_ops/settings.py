@@ -331,16 +331,37 @@ UNFOLD = {
                 "items": [
                     {
                         "title": _("Project Types"),
-                        "icon": 'imagesmode',
+                        "icon": 'task',
                         "link": reverse_lazy(
                             "admin:projects_projecttype_changelist"
                         ),
                     },
                     {
-                        "title": _("Images"),
+                        "title": _("Visibility"),
+                        "icon": 'visibility',
+                        "link": reverse_lazy(
+                            "admin:projects_visibility_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("Project"),
+                        "icon": 'tactic',
+                        "link": reverse_lazy(
+                            "admin:projects_project_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("Project Metadata"),
+                        "icon": 'menu',
+                        "link": reverse_lazy(
+                            "admin:projects_projectmetadata_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("Project Images"),
                         "icon": 'image',
                         "link": reverse_lazy(
-                            "admin:images_image_changelist"
+                            "admin:projects_projectimage_changelist"
                         ),
                     },
                 ]
