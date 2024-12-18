@@ -7,6 +7,7 @@ import shutil
 django.setup()
 from django.db.models import Q
 from datetime import datetime, timedelta
+from datetime import time as dtime
 from datetime import date, timezone
 from typing import Callable, Optional, Dict, AnyStr, Any
 from fastapi import Request
@@ -69,11 +70,12 @@ def get_images(
                     { 
                         'image_id': image.image_id,
                         'image_name': image.image_name,
-                        'image_url': 'http://localhost:29083' +  image.image_file.url,
+                        'image_url': image.image_file.url,
                         'created_at': image.created_at.strftime(DATETIME_FORMAT),
-                        'plant': EdgeBox.objects.get(edge_box_id=image.source_of_origin).plant.plant_name if EdgeBox.objects.filter(edge_box_id=image.source_of_origin).exists() else None,
-                        'edge_box': image.edge_box.edge_box_id if image.edge_box else None,
-                        'location': image.edge_box.edge_box_location if image.edge_box else None,       
+                        'plant': image.sensorbox.edge_box.plant.plant_name if image.sensorbox else None,
+                        'edge_box': image.sensorbox.sensor_box_name if image.sensorbox else None,
+                        'location': image.sensorbox.edge_box.edge_box_location if image.sensorbox else None,
+                        'sub_location': image.sensorbox.sensor_box_location if image.sensorbox else None,     
                     }
                 ]
             }
@@ -82,26 +84,24 @@ def get_images(
         if plant:
             plant = Plant.objects.get(plant_name=plant)
             if location:
-                edge_box = EdgeBox.objects.get(edge_box_location=location, plant=plant)
-                lookup_filter &= Q(('edge_box', edge_box))
+                lookup_filter &= Q(('sensorbox__edge_box__edge_box_location', location))
             else:
-                edge_boxes = EdgeBox.objects.filter(plant=plant)
-                lookup_filter &= Q(('edge_box__in', edge_boxes))
-            
+                lookup_filter &= Q(('sensorbox__edge_box__plant', plant))  
         if created_at:
-            lookup_filter &= Q('created_at', created_at.replace(tzinfo=timezone.utc))
-            
+            lookup_filter &= Q(('created_at__range', (created_at.replace(tzinfo=timezone.utc), datetime.combine(created_at, dtime.max).replace(tzinfo=timezone.utc))))
+        
         images = Image.objects.filter(lookup_filter)
         results = {
             'data': [
                 {
                     'image_id': image.image_id,
                     'image_name': image.image_name,
-                    'image_url': 'http://localhost:29083' +  image.image_file.url,
+                    'image_url': image.image_file.url,
                     'created_at': image.created_at.strftime(DATETIME_FORMAT),
-                    'plant': EdgeBox.objects.get(edge_box_id=image.source_of_origin).plant.plant_name if EdgeBox.objects.filter(edge_box_id=image.source_of_origin).exists() else None,
-                    'edge_box': image.edge_box.edge_box_id if image.edge_box else None,
-                    'location': image.edge_box.edge_box_location if image.edge_box else None,
+                    'plant': image.sensorbox.edge_box.plant.plant_name if image.sensorbox else None,
+                    'edge_box': image.sensorbox.sensor_box_name if image.sensorbox else None,
+                    'location': image.sensorbox.edge_box.edge_box_location if image.sensorbox else None,
+                    'sub_location': image.sensorbox.sensor_box_location if image.sensorbox else None,
                 } for image in images
             ]
         }

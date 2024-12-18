@@ -60,11 +60,24 @@ class ProjectMetadata(models.Model):
     def __str__(self):
         return f"{self.project.name} - {self.key}: {self.value}"
 
+class ImageMode(models.Model):
+    mode = models.CharField(max_length=255)
+    description = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    meta_info = models.JSONField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'image_mode'
+        verbose_name_plural = 'Image Mode'
+        
+    def __str__(self):
+        return self.mode
+
 class ProjectImage(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='project_images')
     image = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='projects')
+    mode = models.ForeignKey(ImageMode, on_delete=models.CASCADE, blank=True, null=True)
     annotated = models.BooleanField(default=False)
-    annotations = models.JSONField(blank=True, null=True)
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

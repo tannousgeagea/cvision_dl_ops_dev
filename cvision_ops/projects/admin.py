@@ -2,7 +2,7 @@
 # Register your models here.
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline
-from .models import ProjectType, Visibility, Project, ProjectMetadata, ProjectImage
+from .models import ProjectType, Visibility, Project, ProjectMetadata, ProjectImage, ImageMode
 
 @admin.register(ProjectType)
 class ProjectTypeAdmin(ModelAdmin):
@@ -30,7 +30,7 @@ class ProjectMetadataInline(TabularInline):
 class ProjectImageInline(TabularInline):
     model = ProjectImage
     extra = 1
-    fields = ('image', 'annotated', 'annotations', 'added_at')
+    fields = ('image', 'annotated', 'added_at')
     readonly_fields = ('added_at',)
 
 
@@ -50,6 +50,12 @@ class ProjectMetadataAdmin(ModelAdmin):
     list_filter = ('created_at',)
     ordering = ('-created_at',)
 
+
+@admin.register(ImageMode)
+class ImageModeAdmin(ModelAdmin):
+    list_display = ('mode', 'description', 'created_at')
+    search_fields = ('mode', 'description')
+    list_filter = ('created_at',)
 
 @admin.register(ProjectImage)
 class ProjectImageAdmin(ModelAdmin):

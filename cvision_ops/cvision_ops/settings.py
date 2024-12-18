@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'tenants',
     'images',
     'projects',
+    'annotations',
     'database',
 ]
 
@@ -310,13 +311,6 @@ UNFOLD = {
                 "collapsible": True,
                 "items": [
                     {
-                        "title": _("Image Mode"),
-                        "icon": 'imagesmode',
-                        "link": reverse_lazy(
-                            "admin:images_imagemode_changelist"
-                        ),
-                    },
-                    {
                         "title": _("Images"),
                         "icon": 'image',
                         "link": reverse_lazy(
@@ -358,10 +352,51 @@ UNFOLD = {
                         ),
                     },
                     {
+                        "title": _("Image Mode"),
+                        "icon": 'imagesmode',
+                        "link": reverse_lazy(
+                            "admin:projects_imagemode_changelist"
+                        ),
+                    },
+                    {
                         "title": _("Project Images"),
                         "icon": 'image',
                         "link": reverse_lazy(
                             "admin:projects_projectimage_changelist"
+                        ),
+                    },
+                ]
+            },
+            {
+                "title": _("Annotations"),
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Annotation Groups"),
+                        "icon": 'group_work',
+                        "link": reverse_lazy(
+                            "admin:annotations_annotationgroup_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("Annotation Classes"),
+                        "icon": 'hotel_class',
+                        "link": reverse_lazy(
+                            "admin:annotations_annotationclass_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("Annotation Type"),
+                        "icon": 'type_specimen',
+                        "link": reverse_lazy(
+                            "admin:annotations_annotationtype_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("Annotations"),
+                        "icon": 'tooltip',
+                        "link": reverse_lazy(
+                            "admin:annotations_annotation_changelist"
                         ),
                     },
                 ]
