@@ -8,11 +8,8 @@ from pathlib import Path
 from typing import List, Dict
 from fastapi import UploadFile
 from django.conf import settings
-from database.models import Image
-from database.models import Project
-from database.models import Annotation
-from utils.data.integrity import validate_image_exists
-from utils.data.integrity import validate_annotation_exists
+from common_utils.data.integrity import validate_image_exists
+from common_utils.data.integrity import validate_annotation_exists
 from .utils import save_annotation_file
 from .utils import get_class_id_from_file
 from .utils import register_annotation_into_db

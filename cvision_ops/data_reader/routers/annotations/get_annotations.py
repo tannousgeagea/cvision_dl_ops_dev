@@ -15,8 +15,8 @@ from fastapi import Depends, Form, Body
 from datetime import datetime, timedelta
 from typing import Callable, Optional, Dict, AnyStr, Any, List
 from database.models import Project, Annotation
-from utils.data.integrity import validate_project_exists
-from utils.data.annotation.utils import load_labels
+from common_utils.data.integrity import validate_project_exists
+from common_utils.data.annotation.utils import load_labels
 
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"

@@ -20,7 +20,7 @@ from fastapi import File, UploadFile
 from pathlib import Path
 from pydantic import BaseModel
 from django.conf import settings
-from utils.data.image import save_image
+from common_utils.data.image.core  import save_image
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 

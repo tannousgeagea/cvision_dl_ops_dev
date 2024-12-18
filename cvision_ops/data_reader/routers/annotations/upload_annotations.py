@@ -14,8 +14,8 @@ from fastapi.routing import APIRoute
 from fastapi import File, UploadFile
 from fastapi import Depends, Form, Body
 from datetime import datetime, timedelta
-from utils.data.annotation.core import save_annotation
-from utils.data.annotation.raw import save_raw_annotation
+from common_utils.data.annotation.core import save_annotation
+from common_utils.data.annotation.raw import save_raw_annotation
 from typing import Callable, Optional, Dict, AnyStr, Any, List
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"

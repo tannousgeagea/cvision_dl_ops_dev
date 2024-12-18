@@ -6,15 +6,12 @@ import django
 django.setup()
 from pathlib import Path
 from fastapi import UploadFile
-from django.conf import settings
 from images.models import Image
 from tenants.models import (
-    EdgeBox, 
     SensorBox,
 )
-
 from django.core.files.base import ContentFile
-from .integrity import validate_image_exists
+from common_utils.data.integrity import validate_image_exists
 
 def register_image_into_db(file, source=None, meta_info:dict=None):
     success = False
@@ -39,12 +36,7 @@ def register_image_into_db(file, source=None, meta_info:dict=None):
             meta_info=meta_info,
             sensorbox=SensorBox.objects.filter(sensor_box_name=source).first()
         )
-        # save_image_file(
-        #     file_path=f"/media/images",
-        #     file=file, 
-        # )
         
-        # image.image_file = f"images/{file.filename}"
         image.image_file.save(
             file.filename, 
             ContentFile(file_content)
