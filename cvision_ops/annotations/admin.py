@@ -41,6 +41,6 @@ class AnnotationTypeAdmin(ModelAdmin):
 class AnnotationAdmin(ModelAdmin):
     list_display = ('id', 'project_image', 'annotation_class', 'annotation_type', 'created_by', 'created_at')
     search_fields = ('project_image__image__image_name', 'annotation_class__name', 'annotation_type__name', 'created_by')
-    list_filter = ('annotation_class', 'annotation_type', 'created_at')
+    list_filter = ('annotation_class', 'annotation_type', 'created_at', 'project_image__project__name')
     ordering = ('-created_at',)
     readonly_fields = ('created_at',)

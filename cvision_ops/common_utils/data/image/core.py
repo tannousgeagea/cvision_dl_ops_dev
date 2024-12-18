@@ -13,7 +13,7 @@ from tenants.models import (
 from django.core.files.base import ContentFile
 from common_utils.data.integrity import validate_image_exists
 
-def register_image_into_db(file, source=None, meta_info:dict=None):
+def register_image_into_db(file, image_id:str=None, source=None, meta_info:dict=None):
     success = False
     result = ''
     try:
@@ -31,7 +31,7 @@ def register_image_into_db(file, source=None, meta_info:dict=None):
         file_content = file.file.read()
         image = Image(
             image_name=filename,
-            image_id=str(uuid.uuid4()),
+            image_id=image_id if image_id else str(uuid.uuid4()),
             source_of_origin=source,
             meta_info=meta_info,
             sensorbox=SensorBox.objects.filter(sensor_box_name=source).first()
@@ -65,11 +65,12 @@ def save_image_file(file_path:str, file:UploadFile):
     
     return success 
 
-def save_image(file, source=None, meta_info:dict=None):
+def save_image(file, image_id:str=None, source=None, meta_info:dict=None):
     success = False
     try:
         success, result = register_image_into_db(
             file=file,
+            image_id=image_id,
             source=source,
             meta_info=meta_info,
         ) 
