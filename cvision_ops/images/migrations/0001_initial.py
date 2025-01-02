@@ -26,6 +26,7 @@ class Migration(migrations.Migration):
                 'db_table': 'image_mode',
             },
         ),
+        
         migrations.CreateModel(
             name='Image',
             fields=[

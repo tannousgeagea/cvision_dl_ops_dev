@@ -38,6 +38,7 @@ class Project(models.Model):
     last_edited = models.DateTimeField(auto_now=True)
     visibility = models.ForeignKey(Visibility, on_delete=models.SET_DEFAULT, default=1)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = "project"

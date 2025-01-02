@@ -17,7 +17,7 @@ services:
     networks:
       - internal
     ports:
-      - 29082-29085:29082-29085
+      - 29081-29085:29081-29085
     env_file: .env
     restart: unless-stopped
     working_dir: /home/$user/src
@@ -52,6 +52,7 @@ services:
     image: postgres:latest
     container_name: cvision-ops-postgres
     env_file: .env
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWD}
