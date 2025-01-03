@@ -122,7 +122,7 @@ def get_project_images(
             os.makedirs(image_location, exist_ok=True)
             os.makedirs(label_location, exist_ok=True)
             
-            shutil.move(image.image.image_file.url, image_location)
+            shutil.copy(image.image.image_file.url, image_location)
             with open(label_location + "/" + file_name, "w") as file:
                 file.writelines(lines)
             
