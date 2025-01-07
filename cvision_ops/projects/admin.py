@@ -59,7 +59,7 @@ class ImageModeAdmin(ModelAdmin):
 
 @admin.register(ProjectImage)
 class ProjectImageAdmin(ModelAdmin):
-    list_display = ('project', 'image', 'annotated', 'added_at')
+    list_display = ('project', 'image', 'annotated', 'reviewed', 'added_at')
     search_fields = ('project__name', 'image__image_name')
     list_filter = ('annotated', 'added_at', 'project')
     ordering = ('-added_at',)

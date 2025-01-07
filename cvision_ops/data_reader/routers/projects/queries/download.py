@@ -71,7 +71,7 @@ def xyxy2xywh(xyxy):
 
 
 @router.api_route(
-    "/project/{project_id}", methods=["GET"], tags=["Projects"]
+    "/projects/{project_id}", methods=["GET"], tags=["Projects"]
 )
 def get_project_images(
     response: Response,

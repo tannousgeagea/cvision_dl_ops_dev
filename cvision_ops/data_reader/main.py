@@ -39,7 +39,7 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json"
     )
 
-    origins = ["http://localhost:3002", "http://192.168.0.142:3000", "http://localhost:8085"]
+    origins = ["http://localhost:3002", "http://192.168.0.142:3000", "http://localhost:8085", "https://w20cgh6g-3002.uks1.devtunnels.ms"]
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,

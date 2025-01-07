@@ -79,6 +79,7 @@ class ProjectImage(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='projects')
     mode = models.ForeignKey(ImageMode, on_delete=models.CASCADE, blank=True, null=True)
     annotated = models.BooleanField(default=False)
+    reviewed = models.BooleanField(default=False)
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
