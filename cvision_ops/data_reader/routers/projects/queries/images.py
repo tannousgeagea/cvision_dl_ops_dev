@@ -67,7 +67,10 @@ router = APIRouter(
 def get_project_images(
     response: Response,
     project_name:str,
+    annotated:bool=False,
+    reviewed:bool=False,
     items_per_page:int=50,
+    page:int=1,
     ):
     results = {}
     try:
@@ -84,20 +87,29 @@ def get_project_images(
             return results
         
         project = project.first()
-        images = ProjectImage.objects.filter(project=project)
+        
+        if page < 1:
+            page = 1
+        
+        if reviewed:
+            annotated = True
+            
+        images = ProjectImage.objects.filter(project=project, annotated=annotated, reviewed=reviewed)
         data = []
-        for image in images:
-            annotation = Annotation.objects.filter(project_image=image)
+        for image in images[(page - 1) * items_per_page:page * items_per_page]:
+            annotation = Annotation.objects.filter(project_image=image, is_active=True)
             data.append(
                 {
                     'image_id': image.image.image_id,
                     'image_name': image.image.image_name,
-                    'image_url': 'http://localhost:29083' + image.image.image_file.url,
+                    'image_url': 'http://localhost:81' + image.image.image_file.url,
                     'created_at': image.image.created_at.strftime(DATETIME_FORMAT),
                     'plant': image.image.sensorbox.edge_box.plant.plant_name if image.image.sensorbox else None,
                     'edge_box': image.image.sensorbox.sensor_box_name if image.image.sensorbox else None,
                     'location': image.image.sensorbox.edge_box.edge_box_location if image.image.sensorbox else None,
                     'sub_location': image.image.sensorbox.sensor_box_location if image.image.sensorbox else None,
+                    'annotated': image.annotated,
+                    'reviewed': image.reviewed,
                     "annotations": [
                         {
                              "class_id": ann.annotation_class.class_id,
@@ -108,11 +120,14 @@ def get_project_images(
                 }              
             )
             
-        total_record = len(data)
+        total_record = len(images)
         results = {
             "total_record": total_record,
             "pages": math.ceil(total_record / items_per_page),
-            'data': data
+            'unannotated': len(ProjectImage.objects.filter(project=project, annotated=False, reviewed=False)),
+            'annotated': len(ProjectImage.objects.filter(project=project, annotated=True, reviewed=False)),
+            'reviewed': len(ProjectImage.objects.filter(project=project, annotated=True, reviewed=True)),
+            'data': data,
         }
     
     except HTTPException as e:

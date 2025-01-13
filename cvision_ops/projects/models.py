@@ -89,3 +89,34 @@ class ProjectImage(models.Model):
         
     def __str__(self):
         return f"{self.project.name} - {self.image.image_name}"
+    
+class Version(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='versions')
+    version_name = models.CharField(max_length=100, unique=True)
+    version_number = models.PositiveIntegerField()  # Incremental version number
+    created_at = models.DateTimeField(auto_now_add=True)
+    description = models.TextField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'version'
+        verbose_name_plural = 'Versions'
+        unique_together = ('project', 'version_number')
+        ordering = ['version_number']
+
+    def __str__(self):
+        return f"{self.project.name} - {self.version_name} (v{self.version_number})"
+
+
+
+class VersionImage(models.Model):
+    version = models.ForeignKey(Version, on_delete=models.RESTRICT, related_name='version_images')
+    project_image = models.ForeignKey(ProjectImage, on_delete=models.RESTRICT, related_name='associated_versions')
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('version', 'project_image')
+        db_table = 'version_image'
+        verbose_name_plural = 'Version Images'
+
+    def __str__(self):
+        return f"{self.version.version_name} - {self.project_image.image.image_name}"

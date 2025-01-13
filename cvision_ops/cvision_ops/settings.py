@@ -364,6 +364,13 @@ UNFOLD = {
                             "admin:projects_projectimage_changelist"
                         ),
                     },
+                    {
+                        "title": _("Versions"),
+                        "icon": 'folder',
+                        "link": reverse_lazy(
+                            "admin:projects_version_changelist"
+                        ),
+                    },
                 ]
             },
             {

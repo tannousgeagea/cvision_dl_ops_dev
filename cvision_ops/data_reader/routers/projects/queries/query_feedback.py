@@ -62,12 +62,12 @@ router = APIRouter(
 
 
 @router.api_route(
-    "/projects/{project_name}/{image_id}/feedback", methods=["GET"], tags=["Projects"]
+    "/projects/{project_name}/feedback", methods=["GET"], tags=["Projects"]
 )
 def query_tenant_feedback(
     response: Response,
     project_name:str,
-    image_id:str,
+    image_id:str=None,
     ):
     results = {}
     try:
@@ -84,9 +84,12 @@ def query_tenant_feedback(
             return results
         
         project = project.first()
-        image = ProjectImage.objects.filter(project=project, image__image_id=image_id)
-        
-        if not image:
+        if image_id:
+            images = ProjectImage.objects.filter(project=project, image__image_id=image_id, reviewed=False)
+        else:
+            images =  ProjectImage.objects.filter(project=project, reviewed=False)
+            
+        if not images:
             results['error'] = {
                 'status_code': "not found",
                 "status_description": f"image {image_id} for Project {project_name} not found",
@@ -96,35 +99,40 @@ def query_tenant_feedback(
             response.status_code = status.HTTP_404_NOT_FOUND
             return results
         
-        feedback = requests.get(
-            url=f'http://datahub.want:19095/api/v1/feedback/alarm/{image_id}'
-        )
-        
-        # data = []
-        # for image in images:
-        #     annotation = Annotation.objects.filter(project_image=image)
-        #     data.append(
-        #         {
-        #             'image_id': image.image.image_id,
-        #             'image_name': image.image.image_name,
-        #             'image_url': 'http://localhost:29083' + image.image.image_file.url,
-        #             'created_at': image.image.created_at.strftime(DATETIME_FORMAT),
-        #             'plant': image.image.sensorbox.edge_box.plant.plant_name if image.image.sensorbox else None,
-        #             'edge_box': image.image.sensorbox.sensor_box_name if image.image.sensorbox else None,
-        #             'location': image.image.sensorbox.edge_box.edge_box_location if image.image.sensorbox else None,
-        #             'sub_location': image.image.sensorbox.sensor_box_location if image.image.sensorbox else None,
-        #             "annotations": [
-        #                 {
-        #                      "class_id": ann.annotation_class.class_id,
-        #                      "class_name": ann.annotation_class.name,
-        #                      "xyxyn": ann.data,
-        #                 } for ann in annotation
-        #             ]
-        #         }              
-        #     )
+        data = []
+        for image in images:
+            feedback = requests.get(
+                url=f'http://datahub.want:19095/api/v1/feedback/alarm/out/{image.image.image_id}'
+            )
+            if not feedback.status_code == 200:
+                results['error'] = {
+                    'status': f"{feedback.status_code}",
+                    'status_description': f"{feedback.text}",
+                    'detail': f"Failed to request Feedback: {feedback.reason}"
+                }
+                
+                # response.status_code = status.HTTP_404_NOT_FOUND
+                # return results
+                data.append(feedback.text)
+                continue
+            
+            is_actual_alarm = False
+            feedback_json = feedback.json()['data']
+            if feedback_json['feedback']:
+                is_actual_alarm = feedback_json['feedback']['is_actual_alarm']
+                
+            annotation = Annotation.objects.filter(project_image=image)
+            if not is_actual_alarm:
+                annotation.update(is_active=False)
+                    
+            annotation.update(reviewed=True)
+            image.reviewed = True
+            image.save()
+            
+            data.append(feedback.json())
         
         results = {
-            'data': feedback.json()
+            'data': data
         }
     
     except HTTPException as e:

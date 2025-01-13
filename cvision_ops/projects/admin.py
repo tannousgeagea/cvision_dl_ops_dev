@@ -2,7 +2,16 @@
 # Register your models here.
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline
-from .models import ProjectType, Visibility, Project, ProjectMetadata, ProjectImage, ImageMode
+from .models import (
+    ProjectType, 
+    Visibility, 
+    Project, 
+    ProjectMetadata, 
+    ProjectImage, 
+    ImageMode,
+    Version,
+    VersionImage,
+)
 
 @admin.register(ProjectType)
 class ProjectTypeAdmin(ModelAdmin):
@@ -61,5 +70,28 @@ class ImageModeAdmin(ModelAdmin):
 class ProjectImageAdmin(ModelAdmin):
     list_display = ('project', 'image', 'annotated', 'reviewed', 'added_at')
     search_fields = ('project__name', 'image__image_name')
-    list_filter = ('annotated', 'added_at', 'project')
+    list_filter = ('annotated', 'added_at', 'project', 'annotated', 'reviewed')
     ordering = ('-added_at',)
+
+    actions = ['mark_reviewed_as_annotated']
+
+    @admin.action(description="Mark reviewed=True and annotated=False as annotated=True")
+    def mark_reviewed_as_annotated(self, request, queryset):
+        """Bulk update images: set annotated=True where reviewed=True and annotated=False"""
+        updated_count = queryset.filter(reviewed=True, annotated=False).update(annotated=True)
+        self.message_user(
+            request,
+            f"{updated_count} images were successfully updated to annotated=True."
+        )
+        
+@admin.register(Version)
+class VersionAdmin(ModelAdmin):
+    list_display = ('project', 'version_name', 'version_number', 'created_at')
+    list_filter = ('project', 'created_at')
+    ordering = ('project', 'version_number')
+    search_fields = ('project__name', 'version_name')
+
+@admin.register(VersionImage)
+class VersionImageAdmin(ModelAdmin):
+    list_display = ('version', 'project_image', 'added_at')
+    list_filter = ('version', 'version__project')
