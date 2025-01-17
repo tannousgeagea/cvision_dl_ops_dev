@@ -1,16 +1,19 @@
 import time
+import random
 from fastapi import APIRouter, HTTPException, status
 from datetime import datetime
 from typing import Callable
 from fastapi import Request
 from fastapi import Response
+from django.db.models import F
 from fastapi.routing import APIRoute, APIRouter
 from django.db import transaction
 from projects.models import (
     Project, 
     ProjectImage, 
     Version, 
-    VersionImage
+    VersionImage,
+    ImageMode,
 )
 
 class TimedRoute(APIRoute):
@@ -35,11 +38,12 @@ router = APIRouter(
 )
 
 @router.api_route(
-    "/projects/{project_name}/versions", methods=["POST"], tags=["Projects"], status_code=status.HTTP_201_CREATED
+    "/projects/{project_name}/split", methods=["POST"], tags=["Projects"], status_code=status.HTTP_201_CREATED
     )
 def create_version(
     response:Response,
     project_name: str,
+    train_ratio:float,
     ):
     """
     Create a new version for a project by associating all reviewed images with the version.
@@ -52,34 +56,31 @@ def create_version(
 
         # Determine the next version number
         project = project.first()
-        last_version = Version.objects.filter(project=project).order_by('-version_number').first()
-        next_version_number = last_version.version_number + 1 if last_version else 1
-        reviewed_images = ProjectImage.objects.filter(project=project, reviewed=True)
+        train_mode = ImageMode.objects.get(mode='train')
+        valid_mode = ImageMode.objects.get(mode='valid')
+        images = list(ProjectImage.objects.filter(project=project, reviewed=True, mode=None))
 
-        if not reviewed_images.exists():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="No reviewed images available to create a version"
-            )
-
+        if not images:
+            response.status_code = status.HTTP_200_OK
+            return {
+                "status_code": "no content",
+                "detail": "All Images are splitted between Train and Valid Set"
+            }
+        
         # Start transaction
         with transaction.atomic():
-            # Create a new version
-            new_version = Version.objects.create(
-                project=project,
-                version_number=next_version_number,
-                version_name=f"v{next_version_number}",
-                created_at=datetime.now()
-            )
+            random.shuffle(images)
 
-            # Associate images with the new version
-            version_images = [
-                VersionImage(version=new_version, project_image=img)
-                for img in reviewed_images
-            ]
-            VersionImage.objects.bulk_create(version_images)
+            # Split the images into train and validation sets
+            split_index = int(len(images) * train_ratio)
+            train_images = images[:split_index]
+            val_images = images[split_index:]
 
-        return {"message": f"Version v{next_version_number} created successfully", "version_id": new_version.id}
+            # Update the mode for train and validation images in bulk
+            ProjectImage.objects.filter(pk__in=[image.pk for image in train_images]).update(mode=train_mode)
+            ProjectImage.objects.filter(pk__in=[image.pk for image in val_images]).update(mode=valid_mode)
+            
+        return {"message": f"Train: {len(train_images)} | Valid: {len(val_images)}"}
 
     except Exception as e:
         raise HTTPException(

@@ -75,7 +75,8 @@ def xyxy2xywh(xyxy):
 )
 def get_project_images(
     response: Response,
-    project_id:str
+    project_id:str,
+    mode:str="train"
     ):
     results = {}
     try:
@@ -90,7 +91,7 @@ def get_project_images(
             return results
         
         project = project.first()
-        images = ProjectImage.objects.filter(project=project)
+        images = ProjectImage.objects.filter(project=project, reviewed=True, mode__mode=mode)
         if not images.exists():
             raise HTTPException(status_code=404, detail="No images found for this project")
         
@@ -102,8 +103,21 @@ def get_project_images(
         for image in images:
             annotations = Annotation.objects.filter(
                 project_image=image,
+                is_active=True
                 )
+            
+            file_name = f"{image.image.image_name}.txt" 
+            image_location = os.path.join(save_location, mode, 'images')
+            label_location = os.path.join(save_location, mode, "labels")
+            
+            os.makedirs(image_location, exist_ok=True)
+            os.makedirs(label_location, exist_ok=True)
+            
             if not annotations.exists():
+                shutil.copy(image.image.image_file.url, image_location)
+                with open(label_location + "/" + file_name, "w") as file:
+                    file.writelines([])
+                    
                 continue
             
             data = [
@@ -112,15 +126,6 @@ def get_project_images(
             
             lines = (("%g " * len(line)).rstrip() % tuple(line) + "\n" for line in data)
 
-            # Define the output file path (e.g., based on image name or ID)
-            file_name = f"{image.image.image_name}.txt" 
-            
-            
-            image_location = os.path.join(save_location, 'images')
-            label_location = os.path.join(save_location, "labels")
-            
-            os.makedirs(image_location, exist_ok=True)
-            os.makedirs(label_location, exist_ok=True)
             
             shutil.copy(image.image.image_file.url, image_location)
             with open(label_location + "/" + file_name, "w") as file:

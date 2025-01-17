@@ -92,7 +92,7 @@ class ProjectImage(models.Model):
     
 class Version(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='versions')
-    version_name = models.CharField(max_length=100, unique=True)
+    version_name = models.CharField(max_length=100)
     version_number = models.PositiveIntegerField()  # Incremental version number
     created_at = models.DateTimeField(auto_now_add=True)
     description = models.TextField(blank=True, null=True)
