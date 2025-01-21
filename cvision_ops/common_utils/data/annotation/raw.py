@@ -7,7 +7,6 @@ from annotations.models import (
     AnnotationGroup,
 )
 
-
 def save_annotations(
     data:List[Dict],
     annotation_type,

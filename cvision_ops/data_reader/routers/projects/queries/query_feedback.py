@@ -32,7 +32,8 @@ from projects.models import (
 )
 
 from annotations.models import (
-    Annotation
+    Annotation,
+    AnnotationClass,
 )
 
 
@@ -118,13 +119,17 @@ def query_tenant_feedback(
             
             is_actual_alarm = False
             feedback_json = feedback.json()['data']
+            annotation = Annotation.objects.filter(project_image=image)
+            
             if feedback_json['feedback']:
                 is_actual_alarm = feedback_json['feedback']['is_actual_alarm']
+                annotation_class = AnnotationClass.objects.get(class_id=feedback_json['feedback']['rating'], annotation_group__project=project)
+                annotation.update(annotation_class=annotation_class)
                 
-            annotation = Annotation.objects.filter(project_image=image)
             if not is_actual_alarm:
                 annotation.update(is_active=False)
-                    
+            
+            
             annotation.update(reviewed=True)
             image.reviewed = True
             image.save()

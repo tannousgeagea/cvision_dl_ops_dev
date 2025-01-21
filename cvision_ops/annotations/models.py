@@ -63,6 +63,7 @@ class Annotation(models.Model):
         AnnotationClass, on_delete=models.CASCADE, related_name='annotations'
     )
     data = models.JSONField()
+    annotation_uid = models.CharField(max_length=100, unique=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.CharField(max_length=255, blank=True, null=True)
     reviewed = models.BooleanField(default=False)

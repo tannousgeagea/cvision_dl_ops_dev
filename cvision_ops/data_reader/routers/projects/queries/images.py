@@ -100,6 +100,7 @@ def get_project_images(
             annotation = Annotation.objects.filter(project_image=image, is_active=True)
             data.append(
                 {
+                    'project_id': image.project.name,
                     'image_id': image.image.image_id,
                     'image_name': image.image.image_name,
                     'image_url': 'http://localhost:81' + image.image.image_file.url,
