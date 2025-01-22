@@ -36,7 +36,7 @@ class AnnotationClass(models.Model):
         unique_together = ('annotation_group', 'class_id')
 
     def __str__(self):
-        return f"{self.class_id} - {self.name} ({self.annotation_group.name})"
+        return f"{self.class_id} - {self.name} ({self.annotation_group.project})"
 
 
 # Create your models here.
@@ -67,6 +67,7 @@ class Annotation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.CharField(max_length=255, blank=True, null=True)
     reviewed = models.BooleanField(default=False)
+    rating = models.ForeignKey(AnnotationClass, on_delete=models.SET_NULL, null=True, blank=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:

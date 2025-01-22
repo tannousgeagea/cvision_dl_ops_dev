@@ -1,3 +1,4 @@
+
 import os
 import math
 import uuid
@@ -7,7 +8,7 @@ import shutil
 django.setup()
 from datetime import datetime, timedelta
 from datetime import date, timezone
-from typing import Callable, Optional, Dict, AnyStr, Any
+from typing import Callable, Optional, Dict, AnyStr, Any, List
 from fastapi import Request
 from fastapi import Response
 from fastapi import APIRouter
@@ -17,19 +18,19 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from fastapi import status
 from pathlib import Path
-
-DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-
-from tenants.models import (
-    Tenant,
-    EdgeBox,
-    Plant,
-    Domain,
-)
+from django.db import transaction
+from pydantic import BaseModel
 
 from projects.models import (
     Project,
     ProjectImage,
+)
+
+from annotations.models import (
+    Annotation,
+    AnnotationClass,
+    AnnotationGroup,
+    AnnotationType
 )
 
 class TimedRoute(APIRoute):
@@ -52,31 +53,30 @@ router = APIRouter(
     route_class=TimedRoute,
 )
 
-@router.api_route(
-    "/projects", methods=["GET"], tags=["Projects"]
-)
-def get_projects(
-    response: Response,
-    ):
-    results = {}
-    try:
-        
-        projects = Project.objects.filter(is_active=True)
-        results = {
-            "data": [
-                {
-                    "id": project.id,
-                    "name": project.name,
-                    "lastEdited": project.last_edited,
-                    "images": len(ProjectImage.objects.filter(project=project)),
-                    "thumbnail": ProjectImage.objects.filter(project=project).first().image.image_file.url if ProjectImage.objects.filter(project=project).exists() else None,
-                } for project in projects
-            ]
-        }
-        
-        return results
-    
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    
+class AnnotationData(BaseModel):
+    id: str
+    x: float
+    y: float
+    width: float
+    height: float
+    label: str
+    color: str
 
+@router.api_route(
+    "/annotations/{id}", methods=["DELETE"], tags=["Annotations"])
+def delete_annotation(id:str):
+    try:
+        if not Annotation.objects.filter(annotation_uid=id).exists():
+            raise HTTPException(
+                status_code=404, detail=f"Annotation id {id} not Found")
+        
+        annotation = Annotation.objects.filter(annotation_uid=id).first()
+        annotation.is_active = False
+        annotation.save()
+        
+        return {"message": "Annotations deleted successfully."}
+        
+        
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

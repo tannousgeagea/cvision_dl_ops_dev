@@ -110,7 +110,7 @@ if os.getenv('DJANGO_STORAGE', 'local') == "azure":
         f"AccountName={AZURE_ACCOUNT_NAME};"
         f"AccountKey={AZURE_ACCOUNT_KEY};"
         f"EndpointSuffix=core.windows.net;"
-        f"BlobEndpoint=https://wacoreblob.blob.core.windows.net/cvisionops"
+        # f"BlobEndpoint=https://wacoreblob.blob.core.windows.net/cvisionops"
     )
 
     STORAGES = {

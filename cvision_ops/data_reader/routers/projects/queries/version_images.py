@@ -86,7 +86,7 @@ def get_version_image(project_name: str, version_number:int):
         version_images = VersionImage.objects.filter(version=version)[:10]
         response = {
                 "data": [{
-                    "image_url": "http://localhost:81" + img.project_image.image.image_file.url,
+                    "image_url": img.project_image.image.image_file.url,
                     "image_name": img.project_image.image.image_name,
                     } for img in version_images],
             }

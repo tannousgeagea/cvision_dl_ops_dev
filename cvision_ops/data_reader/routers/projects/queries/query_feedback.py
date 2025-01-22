@@ -124,7 +124,7 @@ def query_tenant_feedback(
             if feedback_json['feedback']:
                 is_actual_alarm = feedback_json['feedback']['is_actual_alarm']
                 annotation_class = AnnotationClass.objects.get(class_id=feedback_json['feedback']['rating'], annotation_group__project=project)
-                annotation.update(annotation_class=annotation_class)
+                annotation.update(rating=annotation_class)
                 
             if not is_actual_alarm:
                 annotation.update(is_active=False)

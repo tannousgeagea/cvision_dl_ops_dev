@@ -1,3 +1,4 @@
+
 import os
 import math
 import uuid
@@ -18,19 +19,20 @@ from fastapi.routing import APIRoute
 from fastapi import status
 from pathlib import Path
 
-DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-
-from tenants.models import (
-    Tenant,
-    EdgeBox,
-    Plant,
-    Domain,
-)
-
 from projects.models import (
     Project,
     ProjectImage,
 )
+
+from annotations.models import (
+    Annotation,
+    AnnotationGroup,
+    AnnotationClass,
+)
+
+
+def xyxy2xywh(xyxy):
+    return (xyxy[0], xyxy[1], xyxy[2] - xyxy[0], xyxy[3] - xyxy[1])
 
 class TimedRoute(APIRoute):
     def get_route_handler(self) -> Callable:
@@ -53,30 +55,17 @@ router = APIRouter(
 )
 
 @router.api_route(
-    "/projects", methods=["GET"], tags=["Projects"]
-)
-def get_projects(
-    response: Response,
-    ):
-    results = {}
+    "/annotations/classes", methods=["GET"], tags=["Annotations"])
+def get_annotation_classes(project_id: str):
     try:
+        annotation_groups = AnnotationGroup.objects.filter(project__name=project_id)
+        if not annotation_groups.exists():
+            return {"classes": []}
         
-        projects = Project.objects.filter(is_active=True)
-        results = {
-            "data": [
-                {
-                    "id": project.id,
-                    "name": project.name,
-                    "lastEdited": project.last_edited,
-                    "images": len(ProjectImage.objects.filter(project=project)),
-                    "thumbnail": ProjectImage.objects.filter(project=project).first().image.image_file.url if ProjectImage.objects.filter(project=project).exists() else None,
-                } for project in projects
-            ]
-        }
-        
-        return results
-    
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    
+        annotation_classes = AnnotationClass.objects.filter(annotation_group__in=annotation_groups).values(
+            "id", "name", "color", "description"
+        )
+        return {"classes": list(annotation_classes)}
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

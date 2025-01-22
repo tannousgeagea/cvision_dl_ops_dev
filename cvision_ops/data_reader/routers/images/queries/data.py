@@ -70,7 +70,7 @@ def get_images(
                     { 
                         'image_id': image.image_id,
                         'image_name': image.image_name,
-                        'image_url': 'http://localhost:29083' + image.image_file.url,
+                        'image_url': image.image_file.url,
                         'created_at': image.created_at.strftime(DATETIME_FORMAT),
                         'plant': image.sensorbox.edge_box.plant.plant_name if image.sensorbox else None,
                         'edge_box': image.sensorbox.sensor_box_name if image.sensorbox else None,
