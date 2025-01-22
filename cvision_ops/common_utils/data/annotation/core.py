@@ -4,61 +4,51 @@ import django
 import shutil
 django.setup()
 import numpy as np
-from pathlib import Path
-from typing import List, Dict
-from fastapi import UploadFile
-from django.conf import settings
-from common_utils.data.integrity import validate_image_exists
-from common_utils.data.integrity import validate_annotation_exists
-from .utils import save_annotation_file
-from .utils import get_class_id_from_file
-from .utils import register_annotation_into_db
 
-def save_annotation(file, project_name, meta_info:dict=None):
+from annotations.models import (
+    Annotation
+)
+
+
+
+def xyxy2xywh(xyxy):
+    """
+    Convert bounding box coordinates from (xmin, ymin, xmax, ymax) format to (x, y, width, height) format.
+
+    Parameters:
+    - xyxy (Tuple[int, int, int, int]): A tuple representing the bounding box coordinates in (xmin, ymin, xmax, ymax) format.
+
+    Returns:
+    - Tuple[int, int, int, int]: A tuple representing the bounding box in (x, y, width, height) format. 
+                                 (x, y) are  the center of the bounding box.
+    """
+    xmin, ymin, xmax, ymax = xyxy
+    w = xmax - xmin
+    h = ymax - ymin
+    return (xmin + w/2, ymin + h/2, w, h)
+
+def save_annotations_into_txtfile(annotations: Annotation, filename:str, dest:str):
     success = False
     try:
-        filename = f'{file.filename.split(".txt")[0]}'
-        project = Project.objects.get(project_name=project_name)
-        if not validate_image_exists(filename=filename):
-            result = {
-                'filename': file.filename,
-                'status': 'failed',
-                'reason': 'Image does not exist'
-                }
-            return success, result
-         
-        image = Image.objects.get(image_name=filename)
-        if validate_annotation_exists(image=image, project=project):
-            result = {
-                'filename': file.filename,
-                'status': 'failed',
-                'reason': 'Annotation already exist'
-            }
-            return success, result
+        file_name = f"{filename}.txt" 
+        label_location = os.path.join(dest, "labels")
+        os.makedirs(label_location, exist_ok=True)
         
-        file_path = settings.MEDIA_ROOT + "/labels"
-        save_annotation_file(file_path=file_path, file=file)
+        if not annotations.exists():
+            with open(label_location + "/" + file_name, "w") as file:
+                file.writelines([])
+                return True
         
-        lb = get_class_id_from_file(file=file_path + '/' + file.filename)
-        register_annotation_into_db(
-            image=image,
-            project=project,
-            annotation_file='labels/' + file.filename,
-            meta_info={cls_id: str(cls_id) for cls_id in lb}
-        )
+        data = [
+            [ann.annotation_class.class_id] + list(xyxy2xywh(ann.data)) for ann in annotations
+        ]
         
-        result = {
-            'filename': file.filename,
-            'status': 'success',
-        }
-        
+        lines = (("%g " * len(line)).rstrip() % tuple(line) + "\n" for line in data)
+        with open(label_location + "/" + file_name, "w") as file:
+            file.writelines(lines)
         success = True
-        
+            
     except Exception as err:
-        result = {
-            'filename': file.filename,
-            'status': 'failed',
-            'reason': str(err)
-        }
-        
-    return success, result
+        raise ValueError(f"Error in saving annotation into txtfile: {err}")
+    
+    return success

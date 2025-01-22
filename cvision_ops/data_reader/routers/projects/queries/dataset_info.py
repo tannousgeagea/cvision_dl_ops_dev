@@ -89,7 +89,7 @@ def get_dataset_info(project_name: str):
             "count_val": images.filter(mode__mode='valid').count(),
             "data": [
                 {
-                    "image_url": "http://localhost:81" + img.image.image_file.url,
+                    "image_url": img.image.image_file.url,
                     "image_name": img.image.image_name,
                 } for img in images[:10]
             ]

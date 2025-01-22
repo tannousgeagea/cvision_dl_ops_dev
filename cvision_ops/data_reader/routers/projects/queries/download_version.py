@@ -15,13 +15,17 @@ from fastapi.routing import APIRoute
 from fastapi import status
 from pathlib import Path
 from pydantic import BaseModel
+from storages.backends.azure_storage import AzureStorage
 from starlette.responses import FileResponse
+from common_utils.data.annotation.core import save_annotations_into_txtfile
 from projects.models import (
     Version, 
     ProjectImage, 
     Project,
     VersionImage,
 )
+
+from annotations.models import Annotation
 
 class TimedRoute(APIRoute):
     def get_route_handler(self) -> Callable:
@@ -71,16 +75,48 @@ def download_version(project_id: str, version_id: int):
         os.makedirs(f"{base_dir}/train/images", exist_ok=True)
         os.makedirs(f"{base_dir}/valid/images", exist_ok=True)
 
+        azure_storage = AzureStorage()
         # Save images in respective folders
-        for image in train_images:
-            image = image.project_image.image
-            image_path = image.image_file.path # Assuming `file_path` is the field storing the file's path
-            os.symlink(image_path, f"{base_dir}/train/images/{image.image_name}.jpg")
+        if os.getenv('DJANGO_STORAGE', 'local') == 'azure':
+            for image in train_images:
+                blob_name = image.project_image.image.image_file.name
+                local_path = f"{base_dir}/train/images/{image.project_image.image.image_name}.jpg"
+                annotations = Annotation.objects.filter(
+                    project_image=image.project_image,
+                    is_active=True
+                    )
+                save_annotations_into_txtfile(annotations, image.project_image.image.image_name, dest=f"{base_dir}/train")
+                with open(local_path, "wb") as f:
+                    f.write(azure_storage.open(blob_name).read())
 
-        for image in valid_images:
-            image = image.project_image.image
-            image_path = image.image_file.path
-            os.symlink(image_path, f"{base_dir}/valid/images/{image.image_name}.jpg")
+            for image in valid_images:
+                blob_name = image.project_image.image.image_file.name
+                local_path = f"{base_dir}/valid/images/{image.project_image.image.image_name}.jpg"
+                annotations = Annotation.objects.filter(
+                    project_image=image.project_image,
+                    is_active=True
+                    )
+                save_annotations_into_txtfile(annotations, image.project_image.image.image_name, dest=f"{base_dir}/train")
+                with open(local_path, "wb") as f:
+                    f.write(azure_storage.open(blob_name).read())
+        else:
+            for image in train_images:
+                image_path = image.project_image.image.image_file.path
+                annotations = Annotation.objects.filter(
+                    project_image=image.project_image,
+                    is_active=True
+                    )
+                save_annotations_into_txtfile(annotations, image.project_image.image.image_name, dest=f"{base_dir}/train")
+                os.symlink(image_path, f"{base_dir}/train/images/{image.project_image.image.image_name}.jpg")
+
+            for image in valid_images:
+                image_path = image.project_image.image.image_file.path
+                annotations = Annotation.objects.filter(
+                    project_image=image.project_image,
+                    is_active=True
+                    )
+                save_annotations_into_txtfile(annotations, image.project_image.image.image_name, dest=f"{base_dir}/train")
+                os.symlink(image_path, f"{base_dir}/valid/images/{image.project_image.image.image_name}.jpg")
 
         # Zip the folder
         zip_file_path = f"/tmp/{folder_name}.zip"
