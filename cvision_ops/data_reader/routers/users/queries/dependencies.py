@@ -2,8 +2,9 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from django.contrib.auth import get_user_model
+import os
 
-SECRET_KEY = 'django-insecure--ymmm380tdk@rm=en@8e8!qeh2%80*cx!3o98-#-#+h6i$3t*3'
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 ALGORITHM = "HS256"
 User = get_user_model()
 

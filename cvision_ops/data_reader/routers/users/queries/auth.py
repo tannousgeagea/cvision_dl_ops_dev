@@ -4,9 +4,10 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.conf import settings
 from jose import jwt
+import os
 
 # Django settings for JWT
-SECRET_KEY = 'django-insecure--ymmm380tdk@rm=en@8e8!qeh2%80*cx!3o98-#-#+h6i$3t*3'  # Use Django's secret key or create a separate key
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")  # Use Django's secret key or create a separate key
 ALGORITHM = "HS256"
 
 router = APIRouter()
