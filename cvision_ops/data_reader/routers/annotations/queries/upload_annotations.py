@@ -114,6 +114,7 @@ def upload_raw_annotations(response: Response, request: ApiRequest = Depends()):
         success, results = save_annotations(data=request.data, project_image=project_image, annotation_type=annotation_type)
         if success:
             project_image.annotated = True
+            project_image.status = "annotated"
             project_image.save()
         
     except HTTPException as e:

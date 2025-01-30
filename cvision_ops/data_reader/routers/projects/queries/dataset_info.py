@@ -62,25 +62,25 @@ router = APIRouter(
 )
 
 @router.api_route(
-    "/projects/{project_name}/dataset-info", methods=["GET"], tags=["Projects"]
+    "/projects/{project_id}/dataset-info", methods=["GET"], tags=["Projects"]
 )
-def get_dataset_info(project_name: str):
+def get_dataset_info(project_id: str):
     """
     Fetch all versions for a specific project.
     """
     try:
-        project = Project.objects.filter(name=project_name).first()
+        project = Project.objects.filter(name=project_id).first()
         if not project:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Project with ID {project_name} not found."
+                detail=f"Project with ID {project_id} not found."
             )
 
         images = ProjectImage.objects.filter(project=project, reviewed=True)
         if not images:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No Images Found for {project_name}."
+                detail=f"No Images Found for {project_id}."
             )
 
         response = {

@@ -68,9 +68,9 @@ class ImageModeAdmin(ModelAdmin):
 
 @admin.register(ProjectImage)
 class ProjectImageAdmin(ModelAdmin):
-    list_display = ('project', 'image', 'annotated', 'reviewed', 'added_at')
+    list_display = ('project', 'image', "status", 'annotated', 'reviewed', 'added_at')
     search_fields = ('project__name', 'image__image_name')
-    list_filter = ('annotated', 'added_at', 'project', 'annotated', 'reviewed', 'mode')
+    list_filter = ('annotated', 'added_at', 'project', 'annotated', 'reviewed', 'mode', "status")
     ordering = ('-added_at',)
 
     actions = ['mark_reviewed_as_annotated']

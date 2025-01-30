@@ -62,25 +62,25 @@ router = APIRouter(
 )
 
 @router.api_route(
-    "/projects/{project_name}/versions/{version_number}", methods=["GET"], tags=["Projects"]
+    "/projects/{project_id}/versions/{version_number}", methods=["GET"], tags=["Projects"]
 )
-def get_version_image(project_name: str, version_number:int):
+def get_version_image(project_id: str, version_number:int):
     """
     Fetch all versions for a specific project.
     """
     try:
-        project = Project.objects.filter(name=project_name).first()
+        project = Project.objects.filter(name=project_id).first()
         if not project:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Project with ID {project_name} not found."
+                detail=f"Project with ID {project_id} not found."
             )
 
         version = Version.objects.filter(project=project, version_number=version_number).first()
         if not version:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Version with ID {version_number} for {project_name} not found."
+                detail=f"Version with ID {version_number} for {project_id} not found."
             )
 
         version_images = VersionImage.objects.filter(version=version)[:10]

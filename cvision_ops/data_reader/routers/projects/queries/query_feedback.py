@@ -63,22 +63,22 @@ router = APIRouter(
 
 
 @router.api_route(
-    "/projects/{project_name}/feedback", methods=["GET"], tags=["Projects"]
+    "/projects/{project_id}/feedback", methods=["GET"], tags=["Projects"]
 )
 def query_tenant_feedback(
     response: Response,
-    project_name:str,
+    project_id:str,
     image_id:str=None,
     ):
     results = {}
     try:
         
-        project = Project.objects.filter(name=project_name)
+        project = Project.objects.filter(name=project_id)
         if not project:
             results['error'] = {
                 'status_code': "not found",
-                "status_description": f"Project {project_name} not found",
-                "detail": f"Project {project_name} not found",
+                "status_description": f"Project {project_id} not found",
+                "detail": f"Project {project_id} not found",
             }
             
             response.status_code = status.HTTP_404_NOT_FOUND
@@ -93,8 +93,8 @@ def query_tenant_feedback(
         if not images:
             results['error'] = {
                 'status_code': "not found",
-                "status_description": f"image {image_id} for Project {project_name} not found",
-                "detail": f"image {image_id} for Project {project_name} not found",
+                "status_description": f"image {image_id} for Project {project_id} not found",
+                "detail": f"image {image_id} for Project {project_id} not found",
             }
             
             response.status_code = status.HTTP_404_NOT_FOUND
@@ -119,7 +119,7 @@ def query_tenant_feedback(
             
             is_actual_alarm = False
             feedback_json = feedback.json()['data']
-            annotation = Annotation.objects.filter(project_image=image)
+            annotation = Annotation.objects.filter(project_image=image, annotation_uid__contains=image_id)
             
             if feedback_json['feedback']:
                 is_actual_alarm = feedback_json['feedback']['is_actual_alarm']

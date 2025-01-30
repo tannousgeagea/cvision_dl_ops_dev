@@ -75,11 +75,20 @@ class ImageMode(models.Model):
         return self.mode
 
 class ProjectImage(models.Model):
+    STATUS_CHOICES = [
+        ('unannotated', 'Unannotated'),
+        ('annotated', 'Annotated'),
+        ('reviewed', 'Reviewed'),
+        ('dataset', 'Dataset'),
+    ]
+
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='project_images')
     image = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='projects')
     mode = models.ForeignKey(ImageMode, on_delete=models.CASCADE, blank=True, null=True)
     annotated = models.BooleanField(default=False)
     reviewed = models.BooleanField(default=False)
+    finalized = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='unannotated')
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -109,7 +118,7 @@ class Version(models.Model):
 
 
 class VersionImage(models.Model):
-    version = models.ForeignKey(Version, on_delete=models.RESTRICT, related_name='version_images')
+    version = models.ForeignKey(Version, on_delete=models.CASCADE, related_name='version_images')
     project_image = models.ForeignKey(ProjectImage, on_delete=models.RESTRICT, related_name='associated_versions')
     added_at = models.DateTimeField(auto_now_add=True)
 

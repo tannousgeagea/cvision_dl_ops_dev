@@ -35,26 +35,26 @@ router = APIRouter(
 )
 
 @router.api_route(
-    "/projects/{project_name}/versions", methods=["POST"], tags=["Projects"], status_code=status.HTTP_201_CREATED
+    "/projects/{project_id}/versions", methods=["POST"], tags=["Projects"], status_code=status.HTTP_201_CREATED
     )
 def create_version(
     response:Response,
-    project_name: str,
+    project_id: str,
     ):
     """
     Create a new version for a project by associating all reviewed images with the version.
     """
     try:
         # Fetch the project
-        project = Project.objects.filter(name=project_name)
+        project = Project.objects.filter(name=project_id)
         if not project:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project {project_name} not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project {project_id} not found")
 
         # Determine the next version number
         project = project.first()
         last_version = Version.objects.filter(project=project).order_by('-version_number').first()
         next_version_number = last_version.version_number + 1 if last_version else 1
-        reviewed_images = ProjectImage.objects.filter(project=project, reviewed=True)
+        reviewed_images = ProjectImage.objects.filter(project=project, status="dataset")
 
         if not reviewed_images.exists():
             raise HTTPException(

@@ -82,7 +82,7 @@ def get_annotations(
                 "annotation_type": annotation.annotation_type.name,
                 "annotation_class": annotation.rating.name if annotation.rating else annotation.annotation_class.name,
                 "data": {
-                    "id": annotation.annotation_uid,
+                    "id": annotation.annotation_uid if annotation.annotation_uid else str(annotation.id),
                     "x": annotation.data[0],
                     "y":annotation.data[1],
                     "width": annotation.data[2] - annotation.data[0],

@@ -115,6 +115,12 @@ def save_annotations(project_id: str, image_id: str, request: AnnotationData):
                     ],
                     annotation_uid=f"{annotation_data.id}",
                 )
+                
+                if not project_image.annotated:
+                    project_image.annotated = True
+                    project_image.status = "annotated"
+                    project_image.save()
+                    
                 return {"message": "Annotations created successfully."}
             
             annotation = Annotation.objects.filter(annotation_uid=annotation_data.id).first()
@@ -127,7 +133,8 @@ def save_annotations(project_id: str, image_id: str, request: AnnotationData):
             
             annotation.annotation_class = annotation_class
             annotation.save()
-            return {"message": "Annotations updated successfully."}
+                
+            return {"message": "Annotations updated successfully.", "status": project_image.annotated}
         
         
 

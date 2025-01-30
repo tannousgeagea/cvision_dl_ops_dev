@@ -38,11 +38,11 @@ router = APIRouter(
 )
 
 @router.api_route(
-    "/projects/{project_name}/split", methods=["POST"], tags=["Projects"], status_code=status.HTTP_201_CREATED
+    "/projects/{project_id}/split", methods=["POST"], tags=["Projects"], status_code=status.HTTP_201_CREATED
     )
 def create_version(
     response:Response,
-    project_name: str,
+    project_id: str,
     train_ratio:float,
     ):
     """
@@ -50,15 +50,15 @@ def create_version(
     """
     try:
         # Fetch the project
-        project = Project.objects.filter(name=project_name)
+        project = Project.objects.filter(name=project_id)
         if not project:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project {project_name} not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project {project_id} not found")
 
         # Determine the next version number
         project = project.first()
         train_mode = ImageMode.objects.get(mode='train')
         valid_mode = ImageMode.objects.get(mode='valid')
-        images = list(ProjectImage.objects.filter(project=project, reviewed=True, mode=None))
+        images = list(ProjectImage.objects.filter(project=project, status="dataset", mode=None))
 
         if not images:
             response.status_code = status.HTTP_200_OK

@@ -2,6 +2,7 @@ import os
 import math
 import uuid
 import time
+import json
 import django
 import shutil
 django.setup()
@@ -15,7 +16,8 @@ from fastapi import Response
 from fastapi import APIRouter
 from fastapi import HTTPException
 from fastapi.routing import APIRoute
-from fastapi import status
+from fastapi import status as http_status
+from fastapi import Query
 from pathlib import Path
 from pydantic import BaseModel
 
@@ -60,41 +62,76 @@ router = APIRouter(
 )
 
 
+def filter_mapping(key, value):
+    try:
+        if value is None:
+            return None
+        
+        if not len(value):
+            return None
+        
+        if value == "all":
+            return None
+        
+        if key == "mode":
+            return ("mode__mode", value)
+        if key == "filename":
+            return("image__image_name", value)
+        if key == "classes":
+            return("annotations__annotation_class__class_id", value)
+    except Exception as err:
+        raise ValueError(f"Failed to map filter value {value} filter {key}: {err}")
+
 
 @router.api_route(
-    "/projects/{project_name}/images", methods=["GET"], tags=["Projects"]
+    "/projects/{project_id}/images", methods=["GET"], tags=["Projects"]
 )
 def get_project_images(
     response: Response,
-    project_name:str,
-    annotated:bool=False,
-    reviewed:bool=False,
+    project_id:str,
+    status:str,
+    user_filters: Optional[str] = Query(None),
     items_per_page:int=50,
     page:int=1,
     ):
     results = {}
     try:
+        filters_dict = {}
+        if user_filters:
+            try:
+                filters_dict = json.loads(user_filters)
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="Invalid JSON format for user_filters")
+            
+            
+        print(filters_dict)
         
-        project = Project.objects.filter(name=project_name)
+        
+        project = Project.objects.filter(name=project_id)
         if not project:
             results['error'] = {
                 'status_code': "not found",
-                "status_description": f"Project {project_name} not found",
-                "detail": f"Project {project_name} not found",
+                "status_description": f"Project {project_id} not found",
+                "detail": f"Project {project_id} not found",
             }
             
-            response.status_code = status.HTTP_404_NOT_FOUND
+            response.status_code = http_status.HTTP_404_NOT_FOUND
             return results
         
         project = project.first()
         
         if page < 1:
             page = 1
-        
-        if reviewed:
-            annotated = True
             
-        images = ProjectImage.objects.filter(project=project, annotated=annotated, reviewed=reviewed).order_by("-added_at")
+        lookup_filters = Q()
+        lookup_filters &= Q(project=project)
+        lookup_filters &= Q(status=status)
+        for key, value in filters_dict.items():
+            filter_map = filter_mapping(key, value)
+            if filter_map:
+                lookup_filters &= Q(filter_map) 
+        
+        images = ProjectImage.objects.filter(lookup_filters).order_by("-added_at").distinct()
         data = []
         for image in images[(page - 1) * items_per_page:page * items_per_page]:
             annotation = Annotation.objects.filter(project_image=image, is_active=True)
@@ -125,9 +162,10 @@ def get_project_images(
         results = {
             "total_record": total_record,
             "pages": math.ceil(total_record / items_per_page),
-            'unannotated': len(ProjectImage.objects.filter(project=project, annotated=False, reviewed=False)),
-            'annotated': len(ProjectImage.objects.filter(project=project, annotated=True, reviewed=False)),
-            'reviewed': len(ProjectImage.objects.filter(project=project, annotated=True, reviewed=True)),
+            'unannotated': len(ProjectImage.objects.filter(project=project, status="unannotated")),
+            'annotated': len(ProjectImage.objects.filter(project=project, status="annotated")),
+            'reviewed': len(ProjectImage.objects.filter(project=project, status="reviewed")),
+            "user_filters": lookup_filters,
             'data': data,
         }
     
@@ -138,7 +176,7 @@ def get_project_images(
             "detail": f"{e}",
         }
         
-        response.status_code = status.HTTP_404_NOT_FOUND
+        response.status_code = http_status.HTTP_404_NOT_FOUND
     
     except Exception as e:
         results['error'] = {
@@ -147,6 +185,6 @@ def get_project_images(
             "detail": str(e),
         }
         
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        response.status_code = http_status.HTTP_500_INTERNAL_SERVER_ERROR
     
     return results 

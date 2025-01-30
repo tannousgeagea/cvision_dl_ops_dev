@@ -15,7 +15,7 @@ def save_annotations(
     success = False
     results = []
     try:
-        for coords in data:
+        for i, coords in enumerate(data):
             annotation_class = AnnotationClass.objects.filter(
                 class_id=coords[0],
                 annotation_group__project=project_image.project
@@ -36,7 +36,8 @@ def save_annotations(
                 project_image=project_image,
                 annotation_type=annotation_type,
                 annotation_class=annotation_class,
-                data=coords[1:]
+                data=coords[1:],
+                annotation_uid=f"{project_image.image.image_id}_{str(i)}"
             )
             
             if created:
