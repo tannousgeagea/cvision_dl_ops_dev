@@ -6,7 +6,7 @@ import json
 import django
 import shutil
 django.setup()
-from django.db.models import Q
+from django.db.models import Q, Count
 from datetime import datetime, timedelta
 from datetime import time as dtime
 from datetime import date, timezone
@@ -78,7 +78,9 @@ def filter_mapping(key, value):
         if key == "filename":
             return("image__image_name", value)
         if key == "classes":
-            return("annotations__annotation_class__class_id", value)
+            return[("annotations__annotation_class__class_id", value), ("annotations__is_active", True)]
+        if key =="annotation_count":
+            return("annotation_count", value)
     except Exception as err:
         raise ValueError(f"Failed to map filter value {value} filter {key}: {err}")
 
@@ -121,17 +123,29 @@ def get_project_images(
         project = project.first()
         
         if page < 1:
-            page = 1
-            
+            page = 1    
+        
+        
+        queryset = ProjectImage.objects.annotate(
+            annotation_count=Count(
+                "annotations", 
+                filter=Q(annotations__is_active=True)
+                )
+            )
+        
         lookup_filters = Q()
         lookup_filters &= Q(project=project)
         lookup_filters &= Q(status=status)
         for key, value in filters_dict.items():
             filter_map = filter_mapping(key, value)
-            if filter_map:
+            if isinstance(filter_map, list):
+                for f in filter_map:
+                    lookup_filters &= Q(f)
+                
+            elif filter_map:
                 lookup_filters &= Q(filter_map) 
         
-        images = ProjectImage.objects.filter(lookup_filters).order_by("-added_at").distinct()
+        images = queryset.filter(lookup_filters).order_by("-added_at").distinct()
         data = []
         for image in images[(page - 1) * items_per_page:page * items_per_page]:
             annotation = Annotation.objects.filter(project_image=image, is_active=True)

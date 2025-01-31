@@ -83,7 +83,7 @@ def get_version_image(project_id: str, version_number:int):
                 detail=f"Version with ID {version_number} for {project_id} not found."
             )
 
-        version_images = VersionImage.objects.filter(version=version)[:10]
+        version_images = VersionImage.objects.filter(version=version)[:9]
         response = {
                 "data": [{
                     "image_url": img.project_image.image.image_file.url,

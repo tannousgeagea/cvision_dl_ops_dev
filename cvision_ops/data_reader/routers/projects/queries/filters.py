@@ -55,6 +55,14 @@ def get_filters():
                 "items": None,
             },
             {
+                "key": "annotation_count",
+                "title": "Annotation Count",
+                "description": "",
+                "placeholder": "annotation count",
+                "type": "text",
+                "items": None,
+            },
+            {
                 "key": "mode",
                 "title": "Split",
                 "description": "",

@@ -96,7 +96,7 @@ def download_version(project_id: str, version_id: int):
                     project_image=image.project_image,
                     is_active=True
                     )
-                save_annotations_into_txtfile(annotations, image.project_image.image.image_name, dest=f"{base_dir}/train")
+                save_annotations_into_txtfile(annotations, image.project_image.image.image_name, dest=f"{base_dir}/valid")
                 with open(local_path, "wb") as f:
                     f.write(azure_storage.open(blob_name).read())
         else:
@@ -115,7 +115,7 @@ def download_version(project_id: str, version_id: int):
                     project_image=image.project_image,
                     is_active=True
                     )
-                save_annotations_into_txtfile(annotations, image.project_image.image.image_name, dest=f"{base_dir}/train")
+                save_annotations_into_txtfile(annotations, image.project_image.image.image_name, dest=f"{base_dir}/valid")
                 os.symlink(image_path, f"{base_dir}/valid/images/{image.project_image.image.image_name}.jpg")
 
         # Zip the folder
