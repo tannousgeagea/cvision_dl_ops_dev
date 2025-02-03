@@ -19,13 +19,6 @@ from fastapi import status
 from pathlib import Path
 from pydantic import BaseModel
 
-
-from images.models import Image
-from tenants.models import (
-    Tenant,
-    Plant,
-    EdgeBox,
-)
 from projects.models import (
     Project,
     ProjectImage,
@@ -62,7 +55,7 @@ router = APIRouter(
 )
 
 @router.api_route(
-    "/projects/{project_id}/versions", methods=["GET"], tags=["Projects"]
+    "/projects/{project_id}/versions", methods=["GET"], tags=["Versions"]
 )
 def get_project_versions(project_id: str):
     """

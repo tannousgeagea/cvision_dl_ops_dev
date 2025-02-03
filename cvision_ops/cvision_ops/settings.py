@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'images',
     'projects',
     'annotations',
+    'augmentations',
 ]
 
 MIDDLEWARE = [
@@ -403,6 +404,40 @@ UNFOLD = {
                         "icon": 'tooltip',
                         "link": reverse_lazy(
                             "admin:annotations_annotation_changelist"
+                        ),
+                    },
+                ]
+            },
+            {
+                "title": _("Augmentations Manager"),
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Augmentations"),
+                        "icon": '',
+                        "link": reverse_lazy(
+                            "admin:augmentations_augmentation_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("Augmentation Parameters"),
+                        "icon": '',
+                        "link": reverse_lazy(
+                            "admin:augmentations_augmentationparameter_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("Dataset Augmentation"),
+                        "icon": '',
+                        "link": reverse_lazy(
+                            "admin:augmentations_datasetaugmentation_changelist"
+                        ),
+                    },
+                    {
+                        "title": _("Dataset Augmentation Parameters"),
+                        "icon": '',
+                        "link": reverse_lazy(
+                            "admin:augmentations_datasetaugmentationparameter_changelist"
                         ),
                     },
                 ]

@@ -105,6 +105,7 @@ class Version(models.Model):
     version_number = models.PositiveIntegerField()  # Incremental version number
     created_at = models.DateTimeField(auto_now_add=True)
     description = models.TextField(blank=True, null=True)
+    version_file = models.FileField(upload_to="versions/", null=True, blank=True)
 
     class Meta:
         db_table = 'version'

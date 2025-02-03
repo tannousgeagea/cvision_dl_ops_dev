@@ -62,7 +62,7 @@ router = APIRouter(
 )
 
 @router.api_route(
-    "/projects/{project_id}/versions/{version_number}", methods=["GET"], tags=["Projects"]
+    "/projects/{project_id}/versions/{version_number}", methods=["GET"], tags=["Versions"]
 )
 def get_version_image(project_id: str, version_number:int):
     """
