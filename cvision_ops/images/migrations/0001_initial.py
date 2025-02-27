@@ -11,22 +11,7 @@ class Migration(migrations.Migration):
     dependencies = [
     ]
 
-    operations = [
-        migrations.CreateModel(
-            name='ImageMode',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('mode', models.CharField(max_length=255)),
-                ('description', models.CharField(max_length=255)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('meta_info', models.JSONField(blank=True, null=True)),
-            ],
-            options={
-                'verbose_name_plural': 'Image Mode',
-                'db_table': 'image_mode',
-            },
-        ),
-        
+    operations = [        
         migrations.CreateModel(
             name='Image',
             fields=[
@@ -38,7 +23,6 @@ class Migration(migrations.Migration):
                 ('processed', models.BooleanField(default=False)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('meta_info', models.JSONField(blank=True, null=True)),
-                ('mode', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='images.imagemode')),
             ],
             options={
                 'verbose_name_plural': 'Images',

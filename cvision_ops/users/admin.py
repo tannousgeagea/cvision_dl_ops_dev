@@ -22,6 +22,12 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
     pass
 
 
+from django.contrib.contenttypes.models import ContentType
+
+@admin.register(ContentType)
+class ContentTypeAdmin(ModelAdmin):
+    list_display = ('app_label', 'model')
+    search_fields = ('app_label', 'model')
 
 @admin.register(CustomUser)
 class UserAdmin(UserAdmin, ModelAdmin):
