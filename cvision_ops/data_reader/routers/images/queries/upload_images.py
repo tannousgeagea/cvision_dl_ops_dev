@@ -47,6 +47,7 @@ router = APIRouter(
 
 class ApiRequest(BaseModel):
     image_id:Optional[str] = None
+    project_id:Optional[str] = None
     source_of_origin:Optional[str] = None
     
 @router.api_route(
@@ -76,7 +77,8 @@ def upload_images(response: Response, files: list[UploadFile] = File(...), reque
             try:
                 success, result = save_image(
                     file=file, 
-                    image_id=request.image_id, 
+                    image_id=request.image_id,
+                    project_id=request.project_id,
                     source=request.source_of_origin, 
                     meta_info=request.dict()
                     )
