@@ -102,9 +102,13 @@ def query_tenant_feedback(
         
         data = []
         for image in images:
+
+            print(image.image.image_id)
             feedback = requests.get(
                 url=f'http://datahub.want:19095/api/v1/feedback/alarm/out/{image.image.image_id}'
             )
+
+            print(feedback)
             if not feedback.status_code == 200:
                 results['error'] = {
                     'status': f"{feedback.status_code}",
@@ -119,8 +123,11 @@ def query_tenant_feedback(
             
             is_actual_alarm = False
             feedback_json = feedback.json()['data']
-            annotation = Annotation.objects.filter(project_image=image, annotation_uid__contains=image_id)
+            print(feedback_json)
+            annotation = Annotation.objects.filter(project_image=image, annotation_uid__contains=image.image.image_id)
             
+
+            print(annotation)
             if feedback_json['feedback']:
                 is_actual_alarm = feedback_json['feedback']['is_actual_alarm']
                 annotation_class = AnnotationClass.objects.get(class_id=feedback_json['feedback']['rating'], annotation_group__project=project)
