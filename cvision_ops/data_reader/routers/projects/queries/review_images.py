@@ -53,7 +53,7 @@ def review_images(project_id: str, image_id: Optional[str]=None, approved: Optio
                 project_image.status = "annotated"
 
             project_image.save()
-            return {"message": f"Image marked as {project_image.status}"}
+            return {"message": f"Image marked as {project_image.status}", "success": True}
         
         
         project_images =  ProjectImage.objects.filter(project=project, status="annotated")   
@@ -61,7 +61,7 @@ def review_images(project_id: str, image_id: Optional[str]=None, approved: Optio
             raise HTTPException(status_code=404, detail="Image not found in project")
 
         project_images.update(status="reviewed", reviewed=True)
-        return {"message": f"{len(project_images)} Images marked as Reviewed!"}
+        return {"message": f"{len(project_images)} Images marked as Reviewed!", "success": True}
 
     except Exception as e:
         raise HTTPException(
