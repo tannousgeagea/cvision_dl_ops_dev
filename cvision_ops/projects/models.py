@@ -88,6 +88,7 @@ class ProjectImage(models.Model):
     annotated = models.BooleanField(default=False)
     reviewed = models.BooleanField(default=False)
     finalized = models.BooleanField(default=False)
+    feedback_provided = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='unannotated')
     added_at = models.DateTimeField(auto_now_add=True)
 
