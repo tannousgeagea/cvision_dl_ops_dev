@@ -86,9 +86,9 @@ def query_tenant_feedback(
         
         project = project.first()
         if image_id:
-            images = ProjectImage.objects.filter(project=project, image__image_id=image_id, reviewed=False)
+            images = ProjectImage.objects.filter(project=project, image__image_id=image_id, feedback_provided=False)
         else:
-            images =  ProjectImage.objects.filter(project=project, reviewed=False)
+            images =  ProjectImage.objects.filter(project=project, feedback_provided=False)
             
         if not images:
             results['error'] = {
@@ -123,22 +123,22 @@ def query_tenant_feedback(
             
             is_actual_alarm = False
             feedback_json = feedback.json()['data']
-            print(feedback_json)
             annotation = Annotation.objects.filter(project_image=image, annotation_uid__contains=image.image.image_id)
             
-
-            print(annotation)
             if feedback_json['feedback']:
                 is_actual_alarm = feedback_json['feedback']['is_actual_alarm']
-                annotation_class = AnnotationClass.objects.get(class_id=feedback_json['feedback']['rating'], annotation_group__project=project)
+                annotation_class = AnnotationClass.objects.filter(class_id=feedback_json['feedback']['rating'], annotation_group__project=project).first()
+                if not annotation_class:
+                    continue
+
                 annotation.update(rating=annotation_class)
                 
             if not is_actual_alarm:
                 annotation.update(is_active=False)
             
             
-            annotation.update(reviewed=True)
-            image.reviewed = True
+            annotation.update(feedback_provided=True)
+            image.feedback_provided = True
             image.save()
             
             data.append(feedback.json())

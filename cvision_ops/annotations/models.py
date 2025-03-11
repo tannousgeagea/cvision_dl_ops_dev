@@ -68,6 +68,7 @@ class Annotation(models.Model):
     created_by = models.CharField(max_length=255, blank=True, null=True)
     reviewed = models.BooleanField(default=False)
     rating = models.ForeignKey(AnnotationClass, on_delete=models.SET_NULL, null=True, blank=True)
+    feedback_provided = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
     class Meta:
