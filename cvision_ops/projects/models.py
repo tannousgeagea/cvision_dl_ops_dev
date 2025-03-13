@@ -92,6 +92,7 @@ class ProjectImage(models.Model):
     marked_as_null = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='unannotated')
     added_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         unique_together = ('project', 'image')
