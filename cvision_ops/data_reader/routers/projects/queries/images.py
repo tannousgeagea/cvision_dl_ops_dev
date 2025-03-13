@@ -136,6 +136,7 @@ def get_project_images(
         lookup_filters = Q()
         lookup_filters &= Q(project=project)
         lookup_filters &= Q(status=status)
+        lookup_filters &= Q(is_active=True)
         for key, value in filters_dict.items():
             filter_map = filter_mapping(key, value)
             if isinstance(filter_map, list):
@@ -176,9 +177,9 @@ def get_project_images(
         results = {
             "total_record": total_record,
             "pages": math.ceil(total_record / items_per_page),
-            'unannotated': len(ProjectImage.objects.filter(project=project, status="unannotated")),
-            'annotated': len(ProjectImage.objects.filter(project=project, status="annotated")),
-            'reviewed': len(ProjectImage.objects.filter(project=project, status="reviewed")),
+            'unannotated': len(ProjectImage.objects.filter(project=project, status="unannotated", is_active=True)),
+            'annotated': len(ProjectImage.objects.filter(project=project, status="annotated", is_active=True)),
+            'reviewed': len(ProjectImage.objects.filter(project=project, status="reviewed", is_active=True)),
             "user_filters": lookup_filters,
             'data': data,
         }
