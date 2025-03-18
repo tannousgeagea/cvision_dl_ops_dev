@@ -5,7 +5,7 @@ import albumentations as A
 from albumentations.augmentations.dropout import CoarseDropout
 from pathlib import Path
 from typing import List, Dict, Union
-from utils import (
+from .utils import (
     save_annotations, save_image
 )
 
@@ -152,10 +152,13 @@ class AugmentationPipeline:
             if hash_val not in seen_hashes:
                 seen_hashes.add(hash_val)
                 path = save_image(self.output_dir, f"{file_name_prefix}_augmented_{i + 1}", augmented_image)
-                save_annotations(
+                annotation_path = save_annotations(
                     self.output_dir, f"{file_name_prefix}_augmented_{i + 1}", augmented["bboxes"], augmented["category_ids"], annotation_type=annotation_type
                 )
-                augmented_images.append(path)
+                augmented_images.append({
+                    "image": path,
+                    "label": annotation_path
+                })
 
         return augmented_images
 
