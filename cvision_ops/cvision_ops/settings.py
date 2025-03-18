@@ -99,6 +99,13 @@ DATABASES = {
     }
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': '/var/tmp/django_cache',
+    }
+}
+
 # # Azure Storage Configuration
 if os.getenv('DJANGO_STORAGE', 'local') == "azure":
     AZURE_ACCOUNT_NAME = "wacoreblob"
