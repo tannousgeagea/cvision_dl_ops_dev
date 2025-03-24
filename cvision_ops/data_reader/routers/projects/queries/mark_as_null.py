@@ -42,9 +42,7 @@ def mark_image_as_null(project_id: str, image_id: Optional[str]=None, marked_as_
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Project {project_id} not found")
 
         if image_id:
-            project_image = ProjectImage.objects.filter(project=project, image__image_id=image_id, status="annotated").first()
-            if not project_image.annotated:
-                raise HTTPException(status_code=400, detail="Image must be annotated first")
+            project_image = ProjectImage.objects.filter(project=project, image__image_id=image_id).first()
 
             if marked_as_null:
                 project_image.status = "reviewed"
