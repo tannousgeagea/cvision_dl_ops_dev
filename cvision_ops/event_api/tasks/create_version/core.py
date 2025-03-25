@@ -1,4 +1,6 @@
+import os
 import cv2
+import shutil
 import zipfile
 import django
 django.setup()
@@ -51,12 +53,13 @@ def execute(self, version_id, image_ids, **kwargs):
                 with default_storage.open(image_field, 'rb') as file:
                     image_bytes = file.read()
 
-                image_name = version_image.project_image.image.image_name
+                image_name = os.path.basename(version_image.project_image.image.image_name)
                 annotations = Annotation.objects.filter(
                     project_image=version_image.project_image, is_active=True
                 )
                 yolo_annotations = "".join([format_annotation(ann, format="yolo") for ann in annotations])
 
+                augmented_files = []
                 if PREDEFINED_AUGMENTATIONS and not version_image.project_image.marked_as_null and version_image.project_image.mode.mode == "train":
                     cv_image = decode_image(image_bytes)
                     ann_dict = {
@@ -105,11 +108,18 @@ def execute(self, version_id, image_ids, **kwargs):
                     cache.set(f"task_progress_{self.request.id}", {'current': processed, 'total': total}, timeout=3600)
         
         zip_buffer.seek(0)
-        zip_filename = f"versions/{version.project.name}.v{version.version_number}.zip"
-        zip_path = default_storage.save(zip_filename, ContentFile(zip_buffer.getvalue()))
-        version.version_file = zip_path
-        version.save(update_fields=["version_file"])
-        augmented_output_dir.rmdir()
+        zip_filename = f"{version.project.name}.v{version.version_number}.zip"
+        # zip_path = default_storage.save(zip_filename, ContentFile(zip_buffer.getvalue()))
+        # version.version_file = zip_path
+        # version.save(update_fields=["version_file"])
+
+        local_versions_dir = "/tmp/versions"
+        os.makedirs(local_versions_dir, exist_ok=True)
+        local_path = os.path.join(local_versions_dir, zip_filename)
+        with open(local_path, "wb") as f:
+            f.write(zip_buffer.getvalue())
+
+        shutil.rmtree(str(augmented_output_dir))
         cache.set(f"task_progress_{self.request.id}", {'current': total, 'total': total, 'status': 'Completed'}, timeout=3600)
         return {'current': total, 'total': total, 'status': 'Completed'}
     
