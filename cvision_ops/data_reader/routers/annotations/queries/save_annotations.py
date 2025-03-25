@@ -114,6 +114,7 @@ def save_annotations(project_id: str, image_id: str, request: AnnotationData):
                         annotation_data.y + annotation_data.height,   
                     ],
                     annotation_uid=f"{annotation_data.id}",
+                    annotation_source="manual",
                 )
                 
                 if not project_image.annotated:
