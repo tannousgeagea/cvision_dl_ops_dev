@@ -53,7 +53,7 @@ def execute(self, version_id, image_ids, **kwargs):
                 with default_storage.open(image_field, 'rb') as file:
                     image_bytes = file.read()
 
-                image_name = version_image.project_image.image.image_name
+                image_name = os.path.basename(version_image.project_image.image.image_name)
                 annotations = Annotation.objects.filter(
                     project_image=version_image.project_image, is_active=True
                 )
