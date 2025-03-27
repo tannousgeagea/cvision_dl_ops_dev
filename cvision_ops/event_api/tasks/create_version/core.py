@@ -57,7 +57,7 @@ def execute(self, version_id, image_ids, **kwargs):
                 )
                 yolo_annotations = "".join([format_annotation(ann, format="yolo") for ann in annotations])
 
-                if PREDEFINED_AUGMENTATIONS and not version_image.project_image.marked_as_null:
+                if PREDEFINED_AUGMENTATIONS and not version_image.project_image.marked_as_null and version_image.project_image.mode.mode == "train":
                     cv_image = decode_image(image_bytes)
                     ann_dict = {
                         "bboxes": [ann.data for ann in annotations],

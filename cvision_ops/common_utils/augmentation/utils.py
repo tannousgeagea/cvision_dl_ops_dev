@@ -2,7 +2,7 @@ import cv2
 import os
 import json
 from pathlib import Path
-
+import numpy as np
 
 def save_image(output_dir, file_name_prefix, image, mask=None):
     """
@@ -45,3 +45,9 @@ def save_annotations(output_dir, file_name_prefix, bboxes, labels, annotation_ty
         json.dump(annotations, f, indent=4)
 
     return str(annotation_path)
+
+def decode_image(file_bytes):
+    """Convert file bytes into a cv2 image (BGR)"""
+    nparr = np.frombuffer(file_bytes, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    return img
