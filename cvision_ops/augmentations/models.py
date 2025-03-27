@@ -1,5 +1,5 @@
 from django.db import models
-from projects.models import Version
+from projects.models import Version, VersionImage
 
 
 class Augmentation(models.Model):
@@ -89,3 +89,27 @@ class DatasetAugmentationParameter(models.Model):
 
     def __str__(self):
         return f"{self.dataset_augmentation.version.project.name} - {self.parameter.name}: {self.value}"
+
+
+class VersionImageAugmentation(models.Model):
+    """
+    Stores the augmentation result for a single VersionImage.
+    Each instance represents one augmented output derived from the original image.
+    """
+    version_image = models.ForeignKey(
+        VersionImage, 
+        on_delete=models.CASCADE, 
+        related_name='augmentations'
+    )
+    augmentation_name = models.CharField(max_length=255)
+    parameters = models.JSONField(null=True, blank=True)
+    augmented_image_file = models.ImageField(upload_to='versions/augmentations/', null=True, blank=True, max_length=255)
+    augmented_annotation = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'version_image_augmentation'
+        verbose_name_plural = "Version Image Augmentations"
+
+    def __str__(self):
+        return f"Augmentation '{self.augmentation_name}' for {self.version_image}"

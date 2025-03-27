@@ -6,7 +6,8 @@ from .models import (
     AugmentationParameter, 
     AugmentationParameterAssignment,
     DatasetAugmentation, 
-    DatasetAugmentationParameter
+    DatasetAugmentationParameter,
+    VersionImageAugmentation,
 )
 
 # ---- Augmentation Parameter Admin ----
@@ -72,3 +73,7 @@ class DatasetAugmentationParameterAdmin(ModelAdmin):
     list_display = ("dataset_augmentation", "augmentation", "parameter", "value")
     search_fields = ("dataset_augmentation__version__project__name", "augmentation__name", "parameter__name")
     list_filter = ("augmentation",)
+
+@admin.register(VersionImageAugmentation)
+class VersionImageAugmentationAdmin(ModelAdmin):
+    list_display = ("version_image", "augmented_image_file")

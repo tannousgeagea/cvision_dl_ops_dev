@@ -82,3 +82,32 @@ def format_annotation(annotation, format="yolo"):
         return f"<object><name>{annotation.annotation_class.name}</name><bndbox><xmin>{data['bbox'][0]}</xmin><ymin>{data['bbox'][1]}</ymin><xmax>{data['bbox'][2]}</xmax><ymax>{data['bbox'][3]}</ymax></bndbox></object>\n"
 
     return ""
+
+def read_annotation(bbox:list, label:int, image_name:str=None, format="yolo"):
+    """Format annotation based on YOLO, COCO, or Pascal VOC formats."""
+    
+    if format == "yolo":
+        x_min, y_min, x_max, y_max = bbox 
+        x_center = (x_min + x_max) / 2
+        y_center = (y_min + y_max) / 2
+        width = x_max - x_min
+        height = y_max - y_min
+
+        return f"{int(label)} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n"
+
+    elif format == "coco":
+        # COCO format JSON
+        return {
+            "image_id": image_name,
+            "category_id": label,
+            "bbox": bbox,
+            "segmentation": bbox.get("segmentation", []),
+            "area": (bbox[2] - bbox[0]) * (bbox[3] - bbox[1]),
+            "iscrowd": 0
+        }
+
+    elif format == "pascal":
+        # Pascal VOC XML format
+        return f"<object><name>{label}</name><bndbox><xmin>{bbox[0]}</xmin><ymin>{bbox[1]}</ymin><xmax>{bbox[2]}</xmax><ymax>{bbox[3]}</ymax></bndbox></object>\n"
+
+    return ""

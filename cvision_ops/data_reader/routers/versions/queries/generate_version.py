@@ -1,4 +1,5 @@
 import os
+import json
 import zipfile
 import shutil
 import time
@@ -21,6 +22,9 @@ from projects.models import (
     VersionImage
 )
 from annotations.models import Annotation
+from augmentations.models import VersionImageAugmentation
+from common_utils.azure_manager.core import AzureManager
+from common_utils.augmentation.core import AugmentationPipeline, PREDEFINED_AUGMENTATIONS
 
 class TimedRoute(APIRoute):
     def get_route_handler(self) -> Callable:
@@ -44,7 +48,7 @@ router = APIRouter(
 )
 
 @router.api_route(
-    "/projects/{project_id}/versions", methods=["POST"], tags=["Versions"], status_code=status.HTTP_201_CREATED
+    "/versions/{project_id}/create", methods=["POST"], tags=["Versions"], status_code=status.HTTP_201_CREATED
     )
 def create_version(
     response:Response,
@@ -74,6 +78,8 @@ def create_version(
         # Start transaction
         with transaction.atomic():
             # Create a new version
+
+            print(next_version_number)
             new_version = Version.objects.create(
                 project=project,
                 version_number=next_version_number,
@@ -87,41 +93,54 @@ def create_version(
                 for img in images
             ]
             VersionImage.objects.bulk_create(version_images)
-            
-        if os.getenv('DJANGO_STORAGE', 'local') == 'azure':
-            azure_manager = AzureManager()
-            azure_manager.zip_dataset(version_images, version=new_version)
-        else:
-            folder_name = f"{new_version.project.name}.v{new_version.version_number}"
-            base_dir = f"/tmp/{folder_name}"
-            os.makedirs(f"{base_dir}/train/images", exist_ok=True)
-            os.makedirs(f"{base_dir}/valid/images", exist_ok=True)
-            
-            for image in images:
-                prefix = image.project_image.mode.mode
-                image_path = image.project_image.image.image_file.path
-                annotations = Annotation.objects.filter(
-                    project_image=image.project_image,
-                    is_active=True
-                    )
-                save_annotations_into_txtfile(annotations, image.project_image.image.image_name, dest=f"{base_dir}/{prefix}")
-                os.symlink(image_path, f"{base_dir}/{prefix}/images/{image.project_image.image.image_name}.jpg")
 
-            # Zip the folder
-            zip_file_path = f"/tmp/{folder_name}.zip"
-            with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-                for root, _, files in os.walk(base_dir):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        arcname = os.path.relpath(file_path, base_dir)
-                        zipf.write(file_path, arcname)
+        print(len(version_images))
 
-            with open(zip_file_path, "rb") as zipf:
-                file_content = zipf.read()
-                new_version.version_file.save(f"{folder_name}.zip", ContentFile(file_content))
+        if not PREDEFINED_AUGMENTATIONS:
+            return {"message": f"Version v{next_version_number} created successfully", "version_id": new_version.id, "version_number": new_version.version_number}
+        
+        output_dir = f"/tmp/augmented_dataset/{new_version.id}"
+        aug_pipeline = AugmentationPipeline(output_dir=output_dir)
+        for vi in new_version.version_images.all():
+            proj_img = vi.project_image
+            if proj_img.marked_as_null or proj_img.mode.mode.lower() != "train":
+                continue
 
-            shutil.rmtree(base_dir)
-            os.remove(zip_file_path)
+            image_field = proj_img.image.image_file.name
+            cv_image = AzureManager.download_image_from_azure(image_field)
+
+            print('annotation')
+            ann_qs = Annotation.objects.filter(project_image=proj_img, is_active=True)
+            ann_dict = {
+                "bboxes": [ann.data for ann in ann_qs],
+                "labels": [ann.annotation_class.class_id for ann in ann_qs]
+            }
+            augmented_files = aug_pipeline.apply_augmentations_policy(
+                image=cv_image,
+                annotations=ann_dict,
+                annotation_type="detection",
+                file_name_prefix=os.path.basename(proj_img.image.image_file.name),
+                user_selected_augmentations=PREDEFINED_AUGMENTATIONS,
+                multiplier=3,
+            )
+
+            for aug in augmented_files:
+                aug_image_path = aug["image"]
+                aug_annotation_path = aug["label"]
+
+                aug_url = AzureManager.upload_image_to_azure(
+                    local_file_path=aug_image_path, 
+                    azure_path=f"versions/augmentations/{os.path.basename(aug_image_path)}")
+                
+                VersionImageAugmentation.objects.create(
+                    version_image=vi,
+                    augmentation_name="custom",
+                    parameters=PREDEFINED_AUGMENTATIONS,
+                    augmented_image_file=aug_url,
+                    augmented_annotation=json.load(open(aug_annotation_path, "r")) if os.path.exists(aug_annotation_path) else ""
+                )
+        
+        shutil.rmtree(output_dir, ignore_errors=True)
 
         return {"message": f"Version v{next_version_number} created successfully", "version_id": new_version.id, "version_number": new_version.version_number}
 

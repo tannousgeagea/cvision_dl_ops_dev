@@ -1,3 +1,4 @@
+import cv2
 import json
 import hashlib
 import numpy as np
@@ -161,6 +162,17 @@ class AugmentationPipeline:
                 })
 
         return augmented_images
+
+
+PREDEFINED_AUGMENTATIONS = [
+    {"name": "horizontal_flip", "params": {"p": 0.5}},
+    {"name": "vertical_flip", "params": {"p": 0.5}},
+    {"name": "rotate", "params": {"rotate": 15, "p": 0.5}},
+    {"name": "gaussian_blur", "params": {"blur_limit": 3, "p": 0.5}},
+    {"name": "hue_saturation_value", "params": {"hue_shift_limit": 25, "p": 0.5}},
+    {"name": "shear", "params": {"shear": (-10, 10), "p": 0.5}},
+    {"name": "cutout", "params": {"num_holes_range": (1, 3), "hole_height_range": (50, 200), "hole_width_range": (50, 200), "fill": 0, "p": 1.0}}
+]
 
 
 # Example usage

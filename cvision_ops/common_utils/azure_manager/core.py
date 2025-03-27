@@ -23,6 +23,7 @@ class AzureManager:
         """
         pass
 
+    @classmethod
     def download_image_from_azure(self, file_path: str) -> np.ndarray:
         """
         Download an image from Azure Storage.
@@ -37,7 +38,8 @@ class AzureManager:
             data = file.read()
             np_img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
             return np_img
-
+    
+    @classmethod
     def upload_image_to_azure(self, local_file_path: str, azure_path: str):
         """
         Upload an image to Azure Storage.
@@ -48,8 +50,10 @@ class AzureManager:
         """
         with open(local_file_path, 'rb') as file:
             content = ContentFile(file.read())
-            default_storage.save(azure_path, content)
+            url = default_storage.save(azure_path, content)
             
+        return url
+    
     def zip_dataset(self, images, version):
         zip_buffer = BytesIO()
         zip_filename = f"versions/{version.project.name}.v{version.version_number}.zip"
