@@ -1,5 +1,6 @@
 import django
 django.setup()
+import uuid
 from typing import List, Dict
 from annotations.models import (
     Annotation,
@@ -37,7 +38,8 @@ def save_annotations(
                 annotation_type=annotation_type,
                 annotation_class=annotation_class,
                 data=coords[1:],
-                annotation_uid=f"{project_image.image.image_id}_{str(i)}"
+                annotation_uid=f"{str(uuid.uuid4())}",
+                annotation_source="prediction"
             )
             
             if created:
