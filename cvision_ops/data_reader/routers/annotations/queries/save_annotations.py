@@ -133,6 +133,7 @@ def save_annotations(project_id: str, image_id: str, request: AnnotationData):
             ]
             
             annotation.annotation_class = annotation_class
+            annotation.annotation_source = "manual"
             annotation.save()
                 
             return {"message": "Annotations updated successfully.", "status": project_image.annotated}
