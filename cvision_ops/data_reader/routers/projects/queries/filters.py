@@ -65,7 +65,7 @@ def get_filters(project_id:str=None):
         annotation_classes = annotation_group.classes.all()
         items = [
             {
-                "key": annotation.class_id,
+                "key": str(annotation.class_id),
                 "value": annotation.name,
             } for annotation in annotation_classes
         ]
