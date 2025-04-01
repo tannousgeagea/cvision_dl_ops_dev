@@ -18,6 +18,15 @@ from fastapi.routing import APIRoute
 from fastapi import status
 from pathlib import Path
 
+from projects.models import (
+    Project,
+    ProjectImage,
+)
+
+from annotations.models import (
+    AnnotationGroup
+)
+
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 class TimedRoute(APIRoute):
@@ -41,9 +50,26 @@ router = APIRouter(
 )
 
 @router.api_route(
-    "/projects/filters", methods=["GET"], tags=["Projects"]
+    "/projects/{project_id}/filters", methods=["GET"], tags=["Projects"]
 )
-def get_filters():
+def get_filters(project_id:str=None):
+    project = Project.objects.filter(name=project_id).first()
+    items = [
+        { "key": "1", "value": "low" },
+        { "key": "2", "value": "meduim"},
+        { "key": "3", "value": "high" },
+        ]
+    
+    if project:
+        annotation_group = AnnotationGroup.objects.filter(project=project).first()
+        annotation_classes = annotation_group.classes.all()
+        items = [
+            {
+                "key": annotation.class_id,
+                "value": annotation.name,
+            } for annotation in annotation_classes
+        ]
+
     return {
         "filters": [
             {
@@ -79,11 +105,7 @@ def get_filters():
                 "description": "",
                 "placeholder": "Classes",
                 "type": "select",
-                "items": [
-                    { "key": "1", "value": "low" },
-                    { "key": "2", "value": "meduim"},
-                    { "key": "3", "value": "high" },
-                ]
+                "items": items
             },
         ]
     }
