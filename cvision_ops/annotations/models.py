@@ -88,3 +88,10 @@ class Annotation(models.Model):
 
     def __str__(self):
         return f"{self.project_image.project.name} - {self.annotation_class.name}"
+    
+    def save(self, *args, **kwargs):
+        # Ensure self.data exists, is a list, and contains exactly 4 coordinates: [xmin, ymin, xmax, ymax]
+        if self.data and isinstance(self.data, list) and len(self.data) == 4:
+            # Clip each coordinate to the [0, 1] range.
+            self.data = [max(0, min(1, coord)) for coord in self.data]
+        super().save(*args, **kwargs)
