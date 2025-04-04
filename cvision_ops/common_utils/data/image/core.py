@@ -1,4 +1,5 @@
 
+import io
 import os
 import uuid
 import shutil
@@ -11,9 +12,23 @@ from tenants.models import (
     SensorBox,
 )
 
+from PIL import Image as PILImage
 from projects.models import Project, ProjectImage
 from django.core.files.base import ContentFile
 from common_utils.data.integrity import validate_image_exists
+
+def compress_image(file, quality:int=65):
+    image_file = PILImage.open(file.file)
+    compressed_io = io.BytesIO()
+    image_file.convert("RGB").save(
+        compressed_io,
+        format="JPEG",
+        optimize=True,
+        quality=quality
+    )
+
+    compressed_io.seek(0)
+    return compressed_io.read()
 
 def register_image_into_db(file, image_id:str=None, source=None, meta_info:dict=None):
     success = False
@@ -30,7 +45,7 @@ def register_image_into_db(file, image_id:str=None, source=None, meta_info:dict=
             
             return success, result, None
         
-        file_content = file.file.read()
+        file_content = compress_image(file=file)
         image = Image(
             image_name=filename,
             image_id=image_id if image_id else str(uuid.uuid4()),
