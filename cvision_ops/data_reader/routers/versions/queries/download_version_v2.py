@@ -1,6 +1,9 @@
-import zipstream
+
 import os
+import io
 import time
+import zipstream
+from PIL import Image
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.routing import APIRoute
 from fastapi import Request, Response
@@ -11,6 +14,14 @@ from annotations.models import Annotation
 from django.core.files.storage import default_storage
 from common_utils.data.annotation.core import format_annotation, read_annotation
 
+def compress_image(path, quality=75):
+    """Compress image and return bytes."""
+    with default_storage.open(path, 'rb') as f:
+        img = Image.open(f)
+        img_io = io.BytesIO()
+        img.convert('RGB').save(img_io, format='JPEG', optimize=True, quality=quality)
+        img_io.seek(0)
+        return img_io.read()
 
 class TimedRoute(APIRoute):
     def get_route_handler(self) -> Callable:
@@ -46,7 +57,7 @@ def generate_zip_stream(version: Version, annotation_format: str):
     Returns:
         zipstream.ZipFile: An iterable zip file stream.
     """
-    z = zipstream.ZipFile(mode='w', compression=zipstream.ZIP_DEFLATED)
+    z = zipstream.ZipFile(mode='w', compression=zipstream.ZIP_DEFLATED, allowZip64=True)
     version_images = VersionImage.objects.filter(version=version)
 
     for vi in version_images:
@@ -62,7 +73,7 @@ def generate_zip_stream(version: Version, annotation_format: str):
                         break
                     yield chunk
         
-        z.write_iter(f"{prefix}/images/{image_filename}", file_iterator(image_path))        
+        z.writestr(f"{prefix}/images/{image_filename}", compress_image(image_path, quality=65))      
         annotations = Annotation.objects.filter(project_image=proj_img, is_active=True)
         annotation_str = "".join([format_annotation(ann, format=annotation_format) for ann in annotations])
         annotation_bytes = annotation_str.encode('utf-8')
@@ -77,9 +88,7 @@ def generate_zip_stream(version: Version, annotation_format: str):
             # Read the augmented image file using the storage backend.
             if aug.augmented_image_file:
                 try:
-                    with default_storage.open(aug.augmented_image_file.name, 'rb') as f:
-                        aug_image_bytes = f.read()
-                    z.writestr(f"{prefix}/images/{aug_image_filename}", aug_image_bytes)
+                    z.writestr(f"{prefix}/images/{aug_image_filename}", compress_image(aug.augmented_image_file.name, quality=65))
                 except Exception as e:
                     # Log the error and continue
                     print(f"Error adding augmented image for {os.path.basename(proj_img.image.image_file.name)}: {e}")
