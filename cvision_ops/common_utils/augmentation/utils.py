@@ -3,8 +3,9 @@ import os
 import json
 from pathlib import Path
 import numpy as np
+from PIL import Image as PILImage
 
-def save_image(output_dir, file_name_prefix, image, mask=None):
+def save_image(output_dir, file_name_prefix, image, mask=None, quality:int=65):
     """
     Save the augmented image.
 
@@ -15,7 +16,15 @@ def save_image(output_dir, file_name_prefix, image, mask=None):
         mask (numpy.ndarray, optional): Mask to save.
     """
     image_path = Path(output_dir) / f"{file_name_prefix}.jpg"
-    cv2.imwrite(str(image_path), image)
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    pil_img = PILImage.fromarray(image_rgb)
+
+    pil_img.save(
+        str(image_path),
+        format="JPEG",
+        quality=quality,
+        optimize=True
+    )
 
     if mask is not None:
         mask_path = Path(output_dir) / f"{file_name_prefix}_mask.png"

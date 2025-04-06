@@ -59,7 +59,7 @@ def get_cached_zip_path(cached_zip_path) -> str:
             return cached_zip_path
     return ""
 
-def generate_zip_stream(version: Version, annotation_format: str):
+def generate_zip_stream(version: Version, annotation_format: str, task_id:str):
     """
     Generate a streaming zip file for a given version with annotations converted to the desired format.
     This function uses zipstream to build the zip file on the fly.
@@ -123,6 +123,8 @@ def generate_zip_stream(version: Version, annotation_format: str):
                     for bbox, label in zip(aug.augmented_annotation['bboxes'], aug.augmented_annotation['labels'])
                 ])
                 z.writestr(f"{prefix}/labels/{aug_annotation_filename}", annotation_str.encode("utf-8"))
+        track_progress(task_id=task_id, percentage=round((i / version_images.count()) * 100), status="Zipping Files ...")
+
     return z
 
 
@@ -169,10 +171,10 @@ def download_version(
             )
     
     track_progress(task_id=task_id, percentage=0, status="Zipping Files ...")
-    zip_stream = generate_zip_stream(version, annotation_format=format)
+    zip_stream = generate_zip_stream(version, annotation_format=format, task_id=task_id)
     track_progress(task_id=task_id, percentage=100, status="Zipping Files Completed")
 
-    track_progress(task_id=task_id, percentage=0, status="Generating Zip file ...")
+    track_progress(task_id=task_id, percentage=0, status="Generating Zip file ... might take a while")
     if os.getenv("CACHE_ZIP_PATH") == "azure":
         version_zip_rel_path = f"versions/{filename}"
         zip_buffer = io.BytesIO()
@@ -184,11 +186,10 @@ def download_version(
         version.version_file = zip_path
         version.save(update_fields=["version_file"])
         track_progress(task_id=task_id, percentage=100, status="Completed")
-
         return {"url": version.version_file.url}
     else:
         with open(local_zip_path, "wb") as f:
-            for chunk in zip_stream:
+            for i, chunk in enumerate(zip_stream):
                 f.write(chunk)
 
         track_progress(task_id=task_id, percentage=100, status="Completed")

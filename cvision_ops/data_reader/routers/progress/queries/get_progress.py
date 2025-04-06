@@ -46,7 +46,12 @@ router = APIRouter(
 def get_task_progress(task_id: str):
     progress = get_progress(task_id)
     if not progress:
-        raise HTTPException(status_code=404, detail="Task not found")
+        return {
+            "taskId": task_id,
+            "percentage": 0,
+            "status": "Initiating ...",
+        }
+        # raise HTTPException(status_code=404, detail="Task not found")
     
     return {
         "taskId": task_id,
