@@ -1,13 +1,15 @@
 import os
+import uuid
 import json
 import zipfile
 import shutil
 import time
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Header
 from datetime import datetime
-from typing import Callable
+from typing import Callable, Optional
 from fastapi import Request
 from fastapi import Response
+from typing_extensions import Annotated
 from fastapi.routing import APIRoute, APIRouter
 from django.db import transaction
 from django.core.files.base import ContentFile
@@ -25,6 +27,7 @@ from annotations.models import Annotation
 from augmentations.models import VersionImageAugmentation
 from common_utils.azure_manager.core import AzureManager
 from common_utils.augmentation.core import AugmentationPipeline, PREDEFINED_AUGMENTATIONS
+from common_utils.progress.core import track_progress
 
 class TimedRoute(APIRoute):
     def get_route_handler(self) -> Callable:
@@ -53,11 +56,15 @@ router = APIRouter(
 def create_version(
     response:Response,
     project_id: str,
+    x_request_id: Annotated[Optional[str], Header()] = None,
     ):
     """
     Create a new version for a project by associating all reviewed images with the version.
     """
     try:
+        task_id = x_request_id if x_request_id else str(uuid.uuid4())
+        track_progress(task_id=task_id, percentage=0, status="Initializing ...")
+
         # Fetch the project
         project = Project.objects.filter(name=project_id)
         if not project:
@@ -69,6 +76,7 @@ def create_version(
         next_version_number = last_version.version_number + 1 if last_version else 1
         images = ProjectImage.objects.filter(project=project, status="dataset")
 
+        track_progress(task_id=task_id, percentage=0, status="Initiating Version")
         if not images.exists():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
@@ -94,16 +102,18 @@ def create_version(
             ]
             VersionImage.objects.bulk_create(version_images)
 
-        print(len(version_images))
+        track_progress(task_id=task_id, percentage=100, status="Initiating Done")
+        track_progress(task_id=task_id, percentage=0, status="Initiating Images Generation")
 
         if not PREDEFINED_AUGMENTATIONS:
             return {"message": f"Version v{next_version_number} created successfully", "version_id": new_version.id, "version_number": new_version.version_number}
         
         output_dir = f"/tmp/augmented_dataset/{new_version.id}"
         aug_pipeline = AugmentationPipeline(output_dir=output_dir)
-        for vi in new_version.version_images.all():
+        for i, vi in enumerate(new_version.version_images.all()):
             proj_img = vi.project_image
             if proj_img.marked_as_null or proj_img.mode.mode.lower() != "train":
+                track_progress(task_id=task_id, percentage=round((i / new_version.version_images.count()) * 100), status="Generating Images")
                 continue
 
             image_field = proj_img.image.image_file.name
@@ -139,8 +149,11 @@ def create_version(
                     augmented_image_file=aug_url,
                     augmented_annotation=json.load(open(aug_annotation_path, "r")) if os.path.exists(aug_annotation_path) else ""
                 )
+            
+            track_progress(task_id=task_id, percentage=round((i / new_version.version_images.count()) * 100), status="Generating Images")
         
         shutil.rmtree(output_dir, ignore_errors=True)
+        track_progress(task_id=task_id, percentage=100, status="Completed")
 
         return {"message": f"Version v{next_version_number} created successfully", "version_id": new_version.id, "version_number": new_version.version_number}
 
