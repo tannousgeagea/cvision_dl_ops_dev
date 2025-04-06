@@ -40,7 +40,8 @@ def register_image_into_db(file, image_id:str=None, source=None, meta_info:dict=
             result = {
                 'filename': file.filename,
                 'status': 'failed',
-                'reason': 'Image already exists'
+                'reason': 'Image already exists',
+                'image_id': Image.objects.filter(image_name=filename).first().image_id,
             }
             
             return success, result, None
@@ -55,7 +56,7 @@ def register_image_into_db(file, image_id:str=None, source=None, meta_info:dict=
         )
         
         image.image_file.save(
-            file.filename, 
+            os.path.basename(file.filename), 
             ContentFile(file_content)
             )
         image.save()
