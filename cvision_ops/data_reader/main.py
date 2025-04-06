@@ -43,7 +43,7 @@ def create_app() -> FastAPI:
         allow_origins=origins,
         allow_methods=["*"],
         allow_headers=["X-Requested-With", "X-Request-ID"],
-        expose_headers=["X-Request-ID"],
+        expose_headers=["X-Request-ID", "X-Progress-ID"],
     )
 
     for R in ROUTERS:
