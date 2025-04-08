@@ -40,6 +40,7 @@ class TimedRoute(APIRoute):
 
 class AnnotationClassOut(BaseModel):
     id: int
+    classId: str
     name: str
     color: str
     count: int
@@ -74,6 +75,7 @@ def get_classes(
             results.append(
                 AnnotationClassOut(
                     id=cls.id,
+                    classId=str(cls.class_id),
                     name=cls.name,
                     color=cls.color,
                     count=Annotation.objects.filter(project_image__project=project, annotation_class=cls, is_active=True).count()
