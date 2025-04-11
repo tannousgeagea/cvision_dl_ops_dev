@@ -3,6 +3,10 @@ from images.models import (
     Image
 )
 
+# from organizations.models import (
+#     Organization
+# )
+
 # Create your models here.
 class ProjectType(models.Model):
     name = models.CharField(max_length=255)
@@ -39,6 +43,10 @@ class Project(models.Model):
     visibility = models.ForeignKey(Visibility, on_delete=models.SET_DEFAULT, default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+
+    # organization = models.ForeignKey(
+    #     Organization, on_delete=models.SET_NULL, null=True, related_name="projects"
+    # )
 
     class Meta:
         db_table = "project"

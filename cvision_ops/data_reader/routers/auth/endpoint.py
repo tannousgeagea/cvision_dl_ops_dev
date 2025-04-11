@@ -35,7 +35,6 @@ class TimedRoute(APIRoute):
 
 router = APIRouter(
     prefix="/api/v1",
-    tags=["Users"],
     route_class=TimedRoute,
     responses={404: {"description": "Not found"}},
 )
@@ -43,8 +42,10 @@ router = APIRouter(
 
 from .queries.auth import router as auth_router
 from .queries.protected import router as protected_router
+from .queries.me import router as me_router
 
 router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+router.include_router(me_router, prefix="/users", tags=["Users"])
 router.include_router(protected_router, prefix="", tags=["Protected"])
 
 # for Q in QUERIES:

@@ -51,7 +51,7 @@ class UserAdmin(UserAdmin, ModelAdmin):
         "is_active",
     )
     fieldsets = (
-        (None, {"fields": ("email", "password")}),
+        (None, {"fields": ("username", "email", "password")}),
         (
             "Permissions",
             {
@@ -71,6 +71,7 @@ class UserAdmin(UserAdmin, ModelAdmin):
             {
                 "classes": ("wide",),
                 "fields": (
+                    "username",
                     "email",
                     "password1",
                     "password2",
