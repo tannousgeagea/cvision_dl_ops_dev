@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from users.models import CustomUser as User
 from organizations.models import Organization
 from memberships.models import OrganizationMembership
+from projects.models import Project
 from pydantic import BaseModel
 from typing import Optional
 from fastapi import Path
@@ -11,27 +12,27 @@ from data_reader.routers.auth.queries.dependencies import (
 
 router = APIRouter()
 
-class OrgMemberOut(BaseModel):
+class OrgProjectOut(BaseModel):
     id: int
-    username: str
-    email: str
-    role: str
+    name: str
+    memberCount: int
+    organizationId: int
 
-@router.get("/organizations/{org_id}/members", response_model=list[OrgMemberOut])
-def get_org_members(
+@router.get("/organizations/{org_id}/projects", response_model=list[OrgProjectOut])
+def get_org_projects(
     org_id: int,
     _membership=Depends(organization_access_dependency)
 ):
-    memberships = OrganizationMembership.objects.filter(
+    projects = Project.objects.filter(
         organization_id=org_id
-    ).select_related("user", "role")
+    )
 
     return [
         {
-            "id": m.user.id,
-            "username": m.user.username,
-            "email": m.user.email,
-            "role": m.role.name,
+            "id": p.id,
+            "name": p.name,
+            "memberCount": 0,
+            "organizationId": org_id,
         }
-        for m in memberships
+        for p in projects
     ]
