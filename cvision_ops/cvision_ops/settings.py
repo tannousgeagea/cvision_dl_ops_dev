@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'projects',
     'annotations',
     'augmentations',
+    'organizations',
+    'memberships',
 ]
 
 MIDDLEWARE = [

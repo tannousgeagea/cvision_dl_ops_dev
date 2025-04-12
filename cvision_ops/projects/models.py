@@ -3,9 +3,9 @@ from images.models import (
     Image
 )
 
-# from organizations.models import (
-#     Organization
-# )
+from organizations.models import (
+    Organization
+)
 
 # Create your models here.
 class ProjectType(models.Model):
@@ -44,9 +44,9 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
-    # organization = models.ForeignKey(
-    #     Organization, on_delete=models.SET_NULL, null=True, related_name="projects"
-    # )
+    organization = models.ForeignKey(
+        Organization, on_delete=models.SET_NULL, null=True, related_name="projects"
+    )
 
     class Meta:
         db_table = "project"

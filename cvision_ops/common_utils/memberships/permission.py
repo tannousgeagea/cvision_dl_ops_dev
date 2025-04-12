@@ -1,14 +1,15 @@
-from fastapi import Depends, HTTPException, Path
-from fastapi.security import OAuth2PasswordBearer
-from jose import jwt
-from users.models import CustomUser as User
-from django.contrib.auth import get_user_model
 import os
-from typing import Callable
+from fastapi import Depends, HTTPException, status, APIRouter
+from fastapi.security import OAuth2PasswordBearer
 from memberships.models import ProjectMembership, OrganizationMembership
+from django.contrib.auth import get_user_model
+from typing import Callable
+from jose import jwt
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 ALGORITHM = "HS256"
+User = get_user_model()
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -46,9 +47,3 @@ def check_organization_access(org_id: int, role_required: list[str] = None) -> C
             raise HTTPException(status_code=403, detail="Insufficient organization role permissions")
         return membership
     return dependency
-
-def organization_access_dependency(org_id: int = Path(...), user: User = Depends(get_current_user)):
-    membership = OrganizationMembership.objects.filter(user=user, organization_id=org_id).select_related("role").first()
-    if not membership:
-        raise HTTPException(status_code=403, detail="Access denied to this organization")
-    return membership
