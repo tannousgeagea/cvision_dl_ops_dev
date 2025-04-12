@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'projects',
     'annotations',
     'augmentations',
+    'organizations',
+    'memberships',
 ]
 
 MIDDLEWARE = [
@@ -298,6 +300,46 @@ UNFOLD = {
                             "admin:auth_group_changelist"
                             ),
                     }
+                ],
+            },
+            {
+                "title": _("Organizations Management"),
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Organizations"),
+                        "icon": "domain",
+                        "link": reverse_lazy(
+                            "admin:organizations_organization_changelist"
+                            ),
+                    },
+                ],
+            },
+            {
+                "title": _("Memberships"),
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Roles"),
+                        "icon": "domain",
+                        "link": reverse_lazy(
+                            "admin:memberships_role_changelist"
+                            ),
+                    },
+                    {
+                        "title": _("Organization Memberships"),
+                        "icon": "domain",
+                        "link": reverse_lazy(
+                            "admin:memberships_organizationmembership_changelist"
+                            ),
+                    },
+                    {
+                        "title": _("Project Memberships"),
+                        "icon": "domain",
+                        "link": reverse_lazy(
+                            "admin:memberships_projectmembership_changelist"
+                            ),
+                    },
                 ],
             },
             {
