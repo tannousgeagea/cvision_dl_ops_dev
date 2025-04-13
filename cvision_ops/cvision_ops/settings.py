@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'augmentations',
     'organizations',
     'memberships',
+    'jobs',
 ]
 
 MIDDLEWARE = [
@@ -421,6 +422,26 @@ UNFOLD = {
                             "admin:projects_version_changelist"
                         ),
                     },
+                ]
+            },
+            {
+                "title": _("Jobs Management"),
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Jobs"),
+                        "icon": "",
+                        "link": reverse_lazy(
+                            "admin:jobs_job_changelist"
+                        )
+                    },
+                    {
+                        "title": _("Job Images"),
+                        "icon": "",
+                        "link": reverse_lazy(
+                            "admin:jobs_jobimage_changelist"
+                        )
+                    }
                 ]
             },
             {

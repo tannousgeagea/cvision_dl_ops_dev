@@ -45,7 +45,7 @@ class ProjectImageInline(TabularInline):
 
 @admin.register(Project)
 class ProjectAdmin(ModelAdmin):
-    list_display = ('name', 'project_type', 'visibility', 'last_edited', 'created_at')
+    list_display = ('id', 'name', 'project_type', 'visibility', 'last_edited', 'created_at')
     search_fields = ('name', 'description')
     list_filter = ('project_type', 'visibility', 'created_at', 'last_edited')
     ordering = ('-last_edited',)
