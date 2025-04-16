@@ -14,6 +14,7 @@ class Job(models.Model):
         ("assigned", "Assigned"),
         ("in_review", "In Review"),
         ("completed", "Completed"),
+        ("sliced", "Sliced"),
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="unassigned")
     image_count = models.PositiveIntegerField(default=0)
