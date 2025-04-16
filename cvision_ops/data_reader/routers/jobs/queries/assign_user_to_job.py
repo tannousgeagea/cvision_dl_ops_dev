@@ -1,3 +1,6 @@
+import time
+from fastapi import Request, Response
+from fastapi.routing import APIRoute
 from fastapi import APIRouter, Depends, Body
 from django.shortcuts import get_object_or_404
 from users.models import CustomUser as User
@@ -9,12 +12,25 @@ from fastapi import Path
 from django.db import transaction
 from jobs.models import Job
 from data_reader.routers.auth.queries.dependencies import (
-    user_project_access_dependency,
-    project_admin_or_org_admin_dependency,
     job_project_admin_or_org_admin_dependency
 )
 
-router = APIRouter()
+class TimedRoute(APIRoute):
+    def get_route_handler(self):
+        original_route_handler = super().get_route_handler()
+
+        async def custom_route_handler(request):
+            before = time.time()
+            response: Response = await original_route_handler(request)
+            duration = time.time() - before
+            response.headers["X-Response-Time"] = str(duration)
+            return response
+
+        return custom_route_handler
+
+router = APIRouter(
+    route_class=TimedRoute
+)
 
 class JobAssignmentInput(BaseModel):
     user_id: int | None

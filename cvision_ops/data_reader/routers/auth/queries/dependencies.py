@@ -109,3 +109,27 @@ def job_project_admin_or_org_admin_dependency(
 
     raise HTTPException(status_code=403, detail="Requires admin access to project or organization")
 
+def job_project_editor_or_admin_dependency(
+    job_id: int = Path(...),
+    user: User = Depends(get_current_user)
+):
+    job = get_object_or_404(Job.objects.select_related("project__organization"), id=job_id)
+    project = job.project
+
+    # Project-level check (admin or editor)
+    project_membership = ProjectMembership.objects.filter(
+        user=user, project=project
+    ).select_related("role").first()
+
+    if project_membership and project_membership.role.name.lower() in ["admin", "editor"]:
+        return {"membership": project_membership, "source": "project"}
+
+    # Org-level check (admin only still makes sense here)
+    org_membership = OrganizationMembership.objects.filter(
+        user=user, organization=project.organization
+    ).select_related("role").first()
+
+    if org_membership and org_membership.role.name.lower() == "admin":
+        return {"membership": org_membership, "source": "organization"}
+
+    raise HTTPException(status_code=403, detail="Requires editor or admin access to project")
