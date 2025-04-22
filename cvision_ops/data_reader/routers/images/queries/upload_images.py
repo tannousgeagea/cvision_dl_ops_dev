@@ -11,7 +11,7 @@ from typing import Callable, Optional, Dict, AnyStr, Any
 from fastapi import Request
 from fastapi import Response
 from fastapi import APIRouter
-from fastapi import Depends, Form, Body
+from fastapi import Depends, Form, Body, Query
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
@@ -21,6 +21,7 @@ from pathlib import Path
 from pydantic import BaseModel
 from django.conf import settings
 from common_utils.data.image.core  import save_image
+from common_utils.jobs.utils import assign_uploaded_image_to_batch
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -53,7 +54,12 @@ class ApiRequest(BaseModel):
 @router.api_route(
     "/images", methods=["POST"], tags=["Images"]
 )
-def upload_images(response: Response, files: list[UploadFile] = File(...), request: ApiRequest = Depends()):
+def upload_images(
+    response: Response, 
+    files: list[UploadFile] = File(...), 
+    request: ApiRequest = Depends(),
+    batch_id: Optional[str] = Query(None)
+    ):
     results = {
         'status_code': 'ok',
         'status_description': '',
@@ -80,14 +86,21 @@ def upload_images(response: Response, files: list[UploadFile] = File(...), reque
                     image_id=request.image_id,
                     project_id=request.project_id,
                     source=request.source_of_origin, 
-                    meta_info=request.dict()
+                    meta_info=request.model_dump()
                     )
+                
                 if not success:
                     failed_images.append(result)
                     continue
                 
                 results['details'].append(result)
                 saved_images.append(file.filename)
+
+                # Assign to job using batch logic
+                from projects.models import ProjectImage
+                pi = ProjectImage.objects.filter(project__name=request.project_id, image__image_id=result['image_id']).first()
+                if pi:
+                    assign_uploaded_image_to_batch(pi, batch_id)
             
             except Exception as e:
                 failed_images.append({

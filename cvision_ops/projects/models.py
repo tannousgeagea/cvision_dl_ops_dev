@@ -102,6 +102,17 @@ class ProjectImage(models.Model):
     added_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
+    job_assignment_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('assigned', 'Assigned to job'),
+            ('waiting', 'Waiting for job'),
+            ('excluded', 'Excluded from job assignment'),
+        ],
+        default='waiting',
+        help_text="Tracks whether this image is already in a job or still pending assignment."
+    )
+
     class Meta:
         unique_together = ('project', 'image')
         db_table = 'project_image'
