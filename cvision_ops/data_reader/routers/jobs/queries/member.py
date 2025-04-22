@@ -13,7 +13,7 @@ from data_reader.routers.auth.queries.dependencies import (
 router = APIRouter()
 
 class ProjectMemberOut(BaseModel):
-    id: int
+    id: str
     username: str
     email: str
     role: str
@@ -29,7 +29,7 @@ def get_project_members(
 
     return [
         {
-            "id": m.user.id,
+            "id": str(m.user.id),
             "username": m.user.username,
             "email": m.user.email,
             "role": m.role.name,
