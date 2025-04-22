@@ -37,14 +37,15 @@ def register_image_into_db(file, image_id:str=None, source=None, meta_info:dict=
         file_ext = f".{file.filename.split('.')[-1]}"
         filename = file.filename.split(file_ext)[0]
         if validate_image_exists(filename=filename):
+            image = Image.objects.filter(image_name=filename).first()
             result = {
                 'filename': file.filename,
                 'status': 'failed',
                 'reason': 'Image already exists',
-                'image_id': Image.objects.filter(image_name=filename).first().image_id,
+                'image_id': image.image_id,
             }
             
-            return success, result, None
+            return success, result, image
         
         file_content = compress_image(file=file)
         image = Image(
@@ -93,22 +94,20 @@ def save_image(file, image_id:str=None, project_id=None, source=None, meta_info:
             meta_info=meta_info,
         ) 
 
-        if not success:
-            return success, result
-        
-        print(project_id)
+        # if not success:
+        #     return success, result
 
         if project_id:
             project = Project.objects.filter(
                 name=project_id
             ).first()
 
-            print(project)
             if not project:
                 result = {
                     'filename': file.filename,
                     'status': 'failed',
-                    'reason': f"Project {project_id} not found"
+                    'reason': f"Project {project_id} not found",
+                    'image_id': image.image_id,
                 }
                 return success, result
             
@@ -120,6 +119,7 @@ def save_image(file, image_id:str=None, project_id=None, source=None, meta_info:
         result = {
             'filename': file.filename,
             'status': 'success',
+            'image_id': image.image_id,
             }
         
         success = True
