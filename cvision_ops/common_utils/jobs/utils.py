@@ -87,11 +87,11 @@ def assign_uploaded_image_to_batch(project_image, batch_id: Optional[str], user=
     next_number = 1
     if latest_job and latest_job.name.strip().startswith("Job"):
         import re
-        match = re.search(r"Auto Job (\d+)", latest_job.name)
+        match = re.search(r"Job (\d+)", latest_job.name)
         if match:
             next_number = int(match.group(1)) + 1
 
-    new_job_name = f"Auto Job {next_number}"
+    new_job_name = f"Job {next_number}"
 
     job, created = Job.objects.get_or_create(
         project=project_image.project,

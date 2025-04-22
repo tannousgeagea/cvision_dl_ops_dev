@@ -20,6 +20,7 @@ class Job(models.Model):
     image_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    batch_id = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         db_table = "job"
