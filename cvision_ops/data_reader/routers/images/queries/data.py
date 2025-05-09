@@ -9,11 +9,12 @@ from django.db.models import Q
 from datetime import datetime, timedelta
 from datetime import time as dtime
 from datetime import date, timezone
-from typing import Callable, Optional, Dict, AnyStr, Any
+from typing import Callable, Optional, Dict, AnyStr, Any, List
 from fastapi import Request
 from fastapi import Response
 from fastapi import APIRouter
 from fastapi import HTTPException
+from fastapi import Query
 from fastapi.routing import APIRoute
 from fastapi import status
 from pathlib import Path
@@ -50,78 +51,93 @@ router = APIRouter(
 )
 
 
+def parse_query_list(query_list: List[str]) -> dict:
+    if not query_list:
+        return {}
+    
+    parsed = {}
+    for item in query_list:
+        if ":" in item:
+            key, value = item.split(":", 1)
+            parsed[key.strip()] = value.strip()
+    return parsed
+
 
 @router.api_route(
     "/images", methods=["GET"], tags=["Images"]
 )
-def get_images(
-    response: Response,
-    image_id:str=None,
-    plant:str=None,
-    location:str=None,
-    created_at:datetime=None,
-    ):
-    results = {}
-    try:
-        if image_id:
-            image = Image.objects.get(image_id=image_id)
-            return {
-                "data": [
-                    { 
-                        'image_id': image.image_id,
-                        'image_name': image.image_name,
-                        'image_url': image.image_file.url,
-                        'created_at': image.created_at.strftime(DATETIME_FORMAT),
-                        'plant': image.sensorbox.edge_box.plant.plant_name if image.sensorbox else None,
-                        'edge_box': image.sensorbox.sensor_box_name if image.sensorbox else None,
-                        'location': image.sensorbox.edge_box.edge_box_location if image.sensorbox else None,
-                        'sub_location': image.sensorbox.sensor_box_location if image.sensorbox else None,     
-                    }
-                ]
-            }
-        
-        lookup_filter = Q()
-        if plant:
-            plant = Plant.objects.get(plant_name=plant)
-            if location:
-                lookup_filter &= Q(('sensorbox__edge_box__edge_box_location', location))
-            else:
-                lookup_filter &= Q(('sensorbox__edge_box__plant', plant))  
-        if created_at:
-            lookup_filter &= Q(('created_at__range', (created_at.replace(tzinfo=timezone.utc), datetime.combine(created_at, dtime.max).replace(tzinfo=timezone.utc))))
-        
-        images = Image.objects.filter(lookup_filter)
-        results = {
-            'data': [
-                {
-                    'image_id': image.image_id,
-                    'image_name': image.image_name,
-                    'image_url': 'http://localhost:29083' + image.image_file.url,
-                    'created_at': image.created_at.strftime(DATETIME_FORMAT),
-                    'plant': image.sensorbox.edge_box.plant.plant_name if image.sensorbox else None,
-                    'edge_box': image.sensorbox.sensor_box_name if image.sensorbox else None,
-                    'location': image.sensorbox.edge_box.edge_box_location if image.sensorbox else None,
-                    'sub_location': image.sensorbox.sensor_box_location if image.sensorbox else None,
-                } for image in images
+def list_tagged_images(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    name: str = Query(None),
+    source: str = Query(None),
+    tag: str = Query(None),
+    query: Optional[List[str]] = Query(None),
+):
+    queryset = (
+        Image.objects.prefetch_related(
+            "image_tags__tag",
+            "projects"
+        ).select_related("sensorbox__edge_box").order_by('-created_at')
+    )
+
+    if name:
+        queryset = queryset.filter(image_name__icontains=name)
+
+    if source:
+        queryset = queryset.filter(
+            sensorbox__edge_box__edge_box_location__icontains=source
+        ) | queryset.filter(sensorbox__sensor_box_location__icontains=source
+        ) | queryset.filter(source_of_origin__icontains=source)
+
+    if tag:
+        queryset = queryset.filter(image_tags__tag__name__icontains=tag)
+
+    parsed_query = parse_query_list(query)
+    if "tenant" in parsed_query:
+        queryset = queryset.filter(
+            sensorbox__edge_box__plant__tenant__name__icontains=parsed_query['tenant']
+        )
+    
+    if "location" in parsed_query:
+        queryset = queryset.filter(
+            sensorbox__sensor_box_location__icontains=parsed_query['location']
+        )
+
+    if "tag" in parsed_query:
+        queryset = queryset.filter(image_tags__tag__name__icontains=parsed_query["tag"])
+
+
+    total_count = queryset.count()
+    paginated = queryset[offset:offset + limit]
+    results = []
+
+    for image in paginated:
+        tags = [tag.tag.name for tag in image.image_tags.all()]
+        project_images = image.projects.all()
+
+        if image.sensorbox:
+            tags += [
+                image.sensorbox.edge_box.plant.tenant.name,
+                image.sensorbox.edge_box.edge_box_location,
+                image.sensorbox.sensor_box_location,
             ]
-        }
-    
-    except HTTPException as e:
-        results['error'] = {
-            "status_code": "not found",
-            "status_description": "Request not Found",
-            "detail": f"{e}",
-        }
-        
-        response.status_code = status.HTTP_404_NOT_FOUND
-    
-    except Exception as e:
-        results['error'] = {
-            'status_code': 'server-error',
-            "status_description": f"Internal Server Error",
-            "detail": str(e),
-        }
-        
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-    
-    return results 
+
+        for proj_img in project_images:
+            results.append({
+                "id": image.image_id,
+                "name": image.image_name,
+                "src": image.image_file.url if image.image_file else "",
+                "tags":  tags,
+                "source":image.source_of_origin or "Unknown",
+                "date": image.created_at.strftime("%Y-%m-%d"),
+                "projectId": str(proj_img.project.id)
+            })
+
+    return {
+        "total": total_count,
+        "limit": limit,
+        "offset": offset,
+        "query": query,
+        "data": results
+    }
