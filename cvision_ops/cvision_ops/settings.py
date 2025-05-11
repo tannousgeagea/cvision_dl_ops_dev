@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'organizations',
     'memberships',
     'jobs',
+    'ml_models',
 ]
 
 MIDDLEWARE = [
@@ -511,6 +512,47 @@ UNFOLD = {
                         ),
                     },
                 ]
+            },
+            {
+                "title": _("Models Management"),
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Model Tasks"),
+                        "icon": "task",
+                        "link": reverse_lazy(
+                            "admin:ml_models_modeltask_changelist"
+                            ),
+                    },
+                    {
+                        "title": _("Model Framework"),
+                        "icon": "flutter_dash",
+                        "link": reverse_lazy(
+                            "admin:ml_models_modelframework_changelist"
+                            ),
+                    },
+                    {
+                        "title": _("Model Tags"),
+                        "icon": "flutter_dash",
+                        "link": reverse_lazy(
+                            "admin:ml_models_modeltag_changelist"
+                            ),
+                    },
+                    {
+                        "title": _("ML Models"),
+                        "icon": "mindfulness",
+                        "link": reverse_lazy(
+                            "admin:ml_models_model_changelist"
+                            ),
+                    },
+                    {
+                        "title": _("Model Versions"),
+                        "icon": "backup_table",
+                        "link": reverse_lazy(
+                            "admin:ml_models_modelversion_changelist"
+                            ),
+                    }
+                ],
             },
  
         ],
