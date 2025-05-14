@@ -27,7 +27,7 @@ class ModelTagAdmin(ModelAdmin):
 class ModelAdmin(ModelAdmin):
     list_display = ("id", "name", "task", "framework")
     search_fields = ("name",)
-    filter_horizontal = ("tags",)
+    # filter_horizontal = ("tags",)
     
 @admin.register(ModelVersion)
 class ModelVersionAdmin(ModelAdmin):
