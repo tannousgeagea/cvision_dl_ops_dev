@@ -97,6 +97,7 @@ def save_image(file, image_id:str=None, project_id=None, source=None, meta_info:
         # if not success:
         #     return success, result
 
+        print(result)
         if project_id:
             project = Project.objects.filter(
                 name=project_id
@@ -111,7 +112,7 @@ def save_image(file, image_id:str=None, project_id=None, source=None, meta_info:
                 }
                 return success, result
             
-            ProjectImage.objects.create(
+            ProjectImage.objects.get_or_create(
                 project=project,
                 image=image
             )

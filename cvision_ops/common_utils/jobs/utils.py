@@ -36,12 +36,13 @@ def assign_image_to_available_job(project_image: ProjectImage, max_per_job: int 
     for job in available_jobs:
         if job.image_count is None or job.current_count < max_per_job:
             with transaction.atomic():
-                JobImage.objects.create(job=job, project_image=project_image)
-                project_image.job_assignment_status = 'assigned'
-                project_image.save(update_fields=["job_assignment_status"])
+                obj, created = JobImage.objects.get_or_create(job=job, project_image=project_image)
+                if created:
+                    project_image.job_assignment_status = 'assigned'
+                    project_image.save(update_fields=["job_assignment_status"])
 
-                job.image_count = job.current_count + 1
-                job.save(update_fields=['image_count'])
+                    job.image_count = job.current_count + 1
+                    job.save(update_fields=['image_count'])
 
             return job
 

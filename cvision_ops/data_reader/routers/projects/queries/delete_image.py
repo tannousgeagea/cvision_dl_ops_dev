@@ -46,7 +46,10 @@ def delete_image(project_id: str, image_id:str):
             raise HTTPException(status_code=400, detail=f"Image {image_id} Not found")
 
         project_image.is_active = False
-        project_image.save()
+        project_image.reviewed = True
+        project_image.status = "reviewed"
+        project_image.save(update_fields=["reviewed", "status", "is_active"])
+
         return {"message": f"Image marked as inactive", "success": True}
 
     except Exception as e:
