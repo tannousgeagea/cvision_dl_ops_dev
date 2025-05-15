@@ -134,10 +134,14 @@ if os.getenv('DJANGO_STORAGE', 'local') == "azure":
             },
         },
         "staticfiles": {
-            "BACKEND": "storages.backends.azure_storage.AzureStorage",
+            # "BACKEND": "storages.backends.azure_storage.AzureStorage",
+            # "OPTIONS": {
+            #     "connection_string": AZURE_CONNECTION_STRING,
+            #     "azure_container": "cvisionops/static",
+            # },
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
             "OPTIONS": {
-                "connection_string": AZURE_CONNECTION_STRING,
-                "azure_container": "cvisionops/static",
+                "location": BASE_DIR / "staticfiles",  # or your desired local static root
             },
         },
     }
@@ -182,8 +186,8 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-MEDIA_URL = 'media/'
-MEDIA_ROOT = '/media'
+MEDIA_URL = 'static/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
