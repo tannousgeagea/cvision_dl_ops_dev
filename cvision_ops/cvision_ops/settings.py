@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'memberships',
     'jobs',
     'ml_models',
+    'training',
 ]
 
 MIDDLEWARE = [
@@ -537,7 +538,7 @@ UNFOLD = {
                     },
                     {
                         "title": _("Model Tags"),
-                        "icon": "flutter_dash",
+                        "icon": "sell",
                         "link": reverse_lazy(
                             "admin:ml_models_modeltag_changelist"
                             ),
@@ -558,6 +559,19 @@ UNFOLD = {
                     }
                 ],
             },
+            {
+                "title": _("Training"),
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Training sessions"),
+                        "icon": "model_training",
+                        "link": reverse_lazy(
+                            "admin:training_trainingsession_changelist"
+                            ),
+                    },  
+                ]  
+            }
  
         ],
     },
