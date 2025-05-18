@@ -3,7 +3,7 @@ import json
 import hashlib
 import numpy as np
 import albumentations as A
-from albumentations.augmentations.dropout import CoarseDropout
+from albumentations import CoarseDropout
 from pathlib import Path
 from typing import List, Dict, Union
 from .utils import (
