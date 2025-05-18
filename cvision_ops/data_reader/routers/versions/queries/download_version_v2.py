@@ -3,6 +3,8 @@ import os
 import io
 import uuid
 import time
+import yaml
+from io import StringIO
 import zipstream
 from PIL import Image
 from typing_extensions import Annotated
@@ -13,7 +15,7 @@ from typing import Callable, Optional, Literal
 from django.core.files.base import ContentFile
 from starlette.responses import StreamingResponse, FileResponse, RedirectResponse
 from projects.models import Version, VersionImage
-from annotations.models import Annotation
+from annotations.models import Annotation, AnnotationGroup
 from django.core.files.storage import default_storage
 from common_utils.data.annotation.core import format_annotation, read_annotation
 from common_utils.progress.core import track_progress
@@ -58,6 +60,18 @@ def get_cached_zip_path(cached_zip_path) -> str:
         if os.path.exists(cached_zip_path):
             return cached_zip_path
     return ""
+
+
+def generate_data_yaml_content(class_names: list) -> bytes:
+    data = {
+        "train": "train/images",
+        "val": "valid/images",
+        "nc": len(class_names),
+        "names": class_names
+    }
+    buffer = StringIO()
+    yaml.dump(data, buffer)
+    return buffer.getvalue().encode("utf-8")
 
 def generate_zip_stream(version: Version, annotation_format: str, task_id:str):
     """
@@ -124,6 +138,13 @@ def generate_zip_stream(version: Version, annotation_format: str, task_id:str):
                 ])
                 z.writestr(f"{prefix}/labels/{aug_annotation_filename}", annotation_str.encode("utf-8"))
         track_progress(task_id=task_id, percentage=round((i / version_images.count()) * 100), status="Zipping Files ...")
+
+    if annotation_format == "yolo":
+        annotation_group = AnnotationGroup.objects.filter(project=version.project).first()
+        classes = annotation_group.classes.all().order_by('class_id')
+        class_names = [cls.name for cls in classes]
+        yaml_content = generate_data_yaml_content(class_names)
+        z.writestr(f"data.yaml", yaml_content)
 
     return z
 
