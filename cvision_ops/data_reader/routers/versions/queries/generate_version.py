@@ -74,7 +74,7 @@ def create_version(
         project = project.first()
         last_version = Version.objects.filter(project=project).order_by('-version_number').first()
         next_version_number = last_version.version_number + 1 if last_version else 1
-        images = ProjectImage.objects.filter(project=project, status="dataset")
+        images = ProjectImage.objects.filter(project=project, status="dataset", is_active=True)
 
         track_progress(task_id=task_id, percentage=0, status="Initiating Version")
         if not images.exists():

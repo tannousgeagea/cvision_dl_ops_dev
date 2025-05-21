@@ -76,7 +76,7 @@ def get_dataset_info(project_id: str):
                 detail=f"Project with ID {project_id} not found."
             )
 
-        images = ProjectImage.objects.filter(project=project, reviewed=True)
+        images = ProjectImage.objects.filter(project=project, reviewed=True, is_active=True)
         if not images:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
