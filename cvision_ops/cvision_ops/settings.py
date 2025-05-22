@@ -482,6 +482,13 @@ UNFOLD = {
                             "admin:annotations_annotation_changelist"
                         ),
                     },
+                    {
+                        "title": _("Annotation Audits"),
+                        "icon": 'policy',
+                        "link": reverse_lazy(
+                            "admin:annotations_annotationaudit_changelist"
+                        ),
+                    },
                 ]
             },
             {

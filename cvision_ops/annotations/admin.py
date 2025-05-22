@@ -5,6 +5,7 @@ from .models import (
     AnnotationClass,
     AnnotationType,
     Annotation,
+    AnnotationAudit,
 )
 
 class AnnotationClassInline(TabularInline):
@@ -44,3 +45,9 @@ class AnnotationAdmin(ModelAdmin):
     list_filter = ('annotation_class', 'annotation_type', 'created_at', 'project_image__project__name', 'reviewed', 'feedback_provided')
     ordering = ('-created_at',)
     readonly_fields = ('created_at',)
+
+@admin.register(AnnotationAudit)
+class AnnotationAuditAdmin(ModelAdmin):
+    list_display = ("id", "annotation", "evaluation_status", "was_edited", "reviewed_at")
+    list_filter = ("was_edited", "evaluation_status")
+    search_fields = ("id", "annotation_id")
