@@ -33,6 +33,10 @@ def assign_image_to_available_job(project_image: ProjectImage, max_per_job: int 
         status__in=["unassigned", "assigned"]
     ).annotate(current_count=Count("images")).order_by("created_at")
 
+    job_image = JobImage.objects.filter(project_image=project_image).first()
+    if job_image:
+        return job_image.job
+
     for job in available_jobs:
         if job.image_count is None or job.current_count < max_per_job:
             with transaction.atomic():
