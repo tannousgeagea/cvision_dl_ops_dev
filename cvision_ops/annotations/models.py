@@ -89,9 +89,73 @@ class Annotation(models.Model):
     def __str__(self):
         return f"{self.project_image.project.name} - {self.annotation_class.name}"
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._original_data = self.data.copy() if self.data else None
+        self._original_class_id = self.annotation_class_id
+
     def save(self, *args, **kwargs):
         # Ensure self.data exists, is a list, and contains exactly 4 coordinates: [xmin, ymin, xmax, ymax]
         if self.data and isinstance(self.data, list) and len(self.data) == 4:
             # Clip each coordinate to the [0, 1] range.
             self.data = [max(0, min(1, coord)) for coord in self.data]
         super().save(*args, **kwargs)
+
+        if self.annotation_source == 'prediction':
+            if not self.is_active:
+                status = 'FP'
+            elif self.annotation_class_id != self._original_class_id or self.data != self._original_data:
+                status = 'FP'
+            else:
+                status = 'TP'
+
+            AnnotationAudit.objects.update_or_create(
+                annotation=self,
+                defaults={
+                    "evaluation_status": status,
+                    "was_edited": status == 'FP',
+                }
+            )
+        elif self.annotation_source == 'manual':
+            AnnotationAudit.objects.update_or_create(
+                annotation=self,
+                defaults={
+                    "evaluation_status": "FN",
+                    "was_edited": False,
+                }
+            )
+
+class AnnotationAudit(models.Model):
+    annotation = models.OneToOneField(
+        Annotation,
+        on_delete=models.CASCADE,
+        related_name="audit"
+    )
+    evaluation_status = models.CharField(
+        max_length=2,
+        choices=[
+            ('TP', 'True Positive'),
+            ('FP', 'False Positive'),
+            ('FN', 'False Negative'),
+        ],
+        null=True,
+        blank=True
+    )
+    was_edited = models.BooleanField(default=False)
+    matched_manual_annotation = models.ForeignKey(
+        "Annotation",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="matched_predictions"
+    )
+    iou = models.FloatField(null=True, blank=True)
+    reviewed_at = models.DateTimeField(auto_now=True)
+    reviewed_by = models.CharField(max_length=255, blank=True, null=True)  # Or use ForeignKey to User
+
+    class Meta:
+        db_table = 'annotation_audit'
+        verbose_name_plural = "Annotation Audits"
+
+    def __str__(self):
+        return f"{self.annotation.id} - {self.evaluation_status or 'Unreviewed'}"
