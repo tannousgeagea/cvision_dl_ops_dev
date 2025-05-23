@@ -19,9 +19,10 @@ def train_model(self, version_id:str):
         session.save()
 
         # Simulated training steps
-        for i in range(20):
+        for i in range(10):
             time.sleep(10)
             session.progress = round((i + 1) * 10, 1)
+            session.logs +=  f"Epoch {i}: training in progress" + "\n"
             session.save()
 
         # Simulate metrics and final state
