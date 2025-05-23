@@ -54,6 +54,7 @@ def create_app() -> FastAPI:
 
     origins = [
         "http://localhost:8080",
+        os.getenv("FRONTEND_ENDPOINT")
     ]
 
     app.add_middleware(

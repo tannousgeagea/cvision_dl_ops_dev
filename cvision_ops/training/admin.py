@@ -11,6 +11,7 @@ class TrainingSessionAdmin(admin.ModelAdmin):
         "progress",
         "started_at",
         "completed_at",
+        "config",
     )
     list_filter = ("status", "started_at", "completed_at")
     search_fields = ("model_version__model__name",)
@@ -34,6 +35,7 @@ class TrainingSessionAdmin(admin.ModelAdmin):
                 "completed_at",
                 "log_path",
                 "error_message",
+                "config"
             )
         }),
     )

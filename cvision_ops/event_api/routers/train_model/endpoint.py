@@ -7,7 +7,7 @@ from typing import Callable, Optional
 from fastapi import Request, Response, Header
 from fastapi import APIRouter, HTTPException
 from fastapi.routing import APIRoute
-from typing import List, Literal
+from typing import List, Literal, Union
 from pydantic import BaseModel
 from typing_extensions import Annotated
 from projects.models import Version
@@ -39,17 +39,18 @@ router = APIRouter(
 )
 
 class TrainRequest(BaseModel):
+    model_id: int
     dataset_version_id: int
+    base_version_id: Optional[str] = None
     config: Optional[dict] = {}
 
-@router.post("/models/{model_id}/train")
+@router.post("/train")
 def trigger_training(
-    model_id: int, 
     body: TrainRequest,
     x_request_id: Annotated[Optional[str], Header()] = None,
     ):
     try:
-        model = Model.objects.get(id=model_id)
+        model = Model.objects.get(id=body.model_id)
         dataset = Version.objects.get(id=body.dataset_version_id)
 
         last_version = ModelVersion.objects.filter(model=model).order_by("-version").first()
@@ -63,7 +64,7 @@ def trigger_training(
             status="training",
         )
 
-        TrainingSession.objects.create(model_version=model_version)
+        TrainingSession.objects.create(model_version=model_version, config=body.config, logs="Initiating Training Sessions \n")
         task = train_model.apply_async(args=(model_version.id, ), task_id=x_request_id)
 
         return {
@@ -77,3 +78,14 @@ def trigger_training(
         raise HTTPException(404, "Model or dataset not found")
     except Exception as e:
         raise HTTPException(500, str(e))
+
+
+@router.get("/training-sessions/{id}")
+def get_training_status(id: int):
+    session = TrainingSession.objects.get(id=id)
+    return {
+        "status": session.status,
+        "progress": session.progress,
+        "logs": session.logs.splitlines() if session.logs else "",
+        "error": session.error_message,
+    }
