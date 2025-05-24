@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.routing import APIRoute
 from typing import List
 from pydantic import BaseModel
+from django.utils.timezone import localtime
 from training.models import TrainingSession
 
 class TimedRoute(APIRoute):
@@ -30,18 +31,37 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+
+class TrainingSessionOut(BaseModel):
+    id: str
+    modelName: str
+    projectName: str
+    status: str
+    createdAt: str
+    updatedAt: str
+    progress: float
+    metrics: Optional[dict]
+    configuration: Optional[dict]
+    logs: Optional[List[str]]
+
 @router.get("/training-sessions/{session_id}")
-def get_training_session(session_id: int):
+def get_training_session(session_id: int) -> TrainingSessionOut:
     try:
         session = TrainingSession.objects.select_related("model_version").get(id=session_id)
-        return {
-            "model_version": session.model_version.id,
-            "status": session.status,
-            "progress": session.progress,
-            "log_path": session.log_path,
-            "error_message": session.error_message,
-            "started_at": session.started_at,
-            "completed_at": session.completed_at
-        }
+        mv = session.model_version
+        model = mv.model
+        project = model.project
+        return TrainingSessionOut(
+                id=str(session.id),
+                modelName=model.name,
+                projectName=project.name,
+                status=session.status,
+                createdAt=localtime(session.created_at).isoformat(),
+                updatedAt=localtime(session.updated_at).isoformat(),
+                progress=session.progress,
+                metrics=session.metrics,
+                configuration=session.config,
+                logs=session.logs.splitlines() if session.logs else []
+            )
     except TrainingSession.DoesNotExist:
         raise HTTPException(404, "Session not found")
