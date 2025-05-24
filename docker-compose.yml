@@ -3,7 +3,7 @@ version: '3.3'
 services:
   # computing unit
   cvision-dl-ops:
-    image: tannous/tannous:cvision-ops-ubuntu.22.04
+    image: tannousgeagea/cvisionops:latest
     container_name: cvision-ops-core
     stdin_open: true # docker run -i
     tty: true        # docker run -t
