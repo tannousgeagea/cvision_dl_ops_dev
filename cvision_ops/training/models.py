@@ -16,7 +16,9 @@ class TrainingSession(models.Model):
     log_path = models.CharField(max_length=1024, blank=True, null=True, help_text="Path to the full training log file")
     error_message = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     config = models.JSONField(null=True, blank=True)
+    metrics = models.JSONField(null=True, blank=True)
 
     class Meta:
         db_table = "training_session"
