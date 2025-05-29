@@ -51,6 +51,12 @@ def get_training_session(session_id: int) -> TrainingSessionOut:
         mv = session.model_version
         model = mv.model
         project = model.project
+
+        if isinstance(session.metrics, list):
+            metrics = session.metrics[-1]
+        else:
+            metrics = session.metrics
+            
         return TrainingSessionOut(
                 id=str(session.id),
                 modelName=model.name,
@@ -59,7 +65,7 @@ def get_training_session(session_id: int) -> TrainingSessionOut:
                 createdAt=localtime(session.created_at).isoformat(),
                 updatedAt=localtime(session.updated_at).isoformat(),
                 progress=session.progress,
-                metrics=session.metrics,
+                metrics=metrics,
                 configuration=session.config,
                 logs=session.logs.splitlines() if session.logs else []
             )

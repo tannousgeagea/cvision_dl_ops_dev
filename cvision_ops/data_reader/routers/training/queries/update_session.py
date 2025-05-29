@@ -7,7 +7,7 @@ from typing import Callable, Optional
 from fastapi import Request, Response
 from fastapi import APIRouter, HTTPException
 from fastapi.routing import APIRoute
-from typing import List
+from typing import List, Dict
 from pydantic import BaseModel
 from training.models import TrainingSession
 
@@ -36,7 +36,9 @@ router = APIRouter(
 class TrainingUpdate(BaseModel):
     status: Optional[str] = None
     progress: Optional[float] = None
+    logs: Optional[str] = None
     log_path: Optional[str] = None
+    metrics: Optional[Dict] = None
     error_message: Optional[str] = None
 
 @router.patch("/training-sessions/{session_id}")
@@ -50,6 +52,14 @@ def update_session(session_id: int, data: TrainingUpdate):
             session.progress = data.progress
         if data.log_path:
             session.log_path = data.log_path
+        if data.logs:
+            if session.logs is None:
+                session.logs = ""
+            session.logs += data.logs + "\n"
+        if data.metrics:
+            if session.metrics is None:
+                session.metrics = []
+            session.metrics.append(data.metrics)
         if data.error_message:
             session.error_message = data.error_message
             session.status = "failed"
