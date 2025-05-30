@@ -65,7 +65,7 @@ def trigger_training(
         )
 
         TrainingSession.objects.create(model_version=model_version, config=body.config, logs="Initiating Training Sessions \n")
-        task = train_model.apply_async(args=(model_version.id, ), task_id=x_request_id)
+        task = train_model.apply_async(args=(model_version.id, body.base_version_id, ), task_id=x_request_id)
 
         return {
             "message": "Training triggered",

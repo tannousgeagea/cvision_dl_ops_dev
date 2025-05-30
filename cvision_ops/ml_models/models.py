@@ -73,7 +73,7 @@ class ModelVersion(models.Model):
         ('failed', 'Failed'),
         ('deployed', 'Deployed'),
     ]
-    model = models.ForeignKey('Model', on_delete=models.RESTRICT, related_name='versions')
+    model = models.ForeignKey(Model, on_delete=models.RESTRICT, related_name='versions')
     version = models.CharField(max_length=50)
     checkpoint = models.FileField(
         upload_to=get_model_artifact_path,

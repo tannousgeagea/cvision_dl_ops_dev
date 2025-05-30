@@ -5,10 +5,13 @@ django.setup()
 from celery import shared_task
 from django.utils import timezone
 from training.models import ModelVersion
+from common_utils.training.utils import trigger_trainml_training
 
+
+TrainML_API = "http://server1.learning.test.want:29092/api/v1/train"
 @shared_task(bind=True,autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 5}, ignore_result=True,
              name='train_model:execute')
-def train_model(self, version_id:str):
+def train_model(self, version_id:str, base_version:str):
     try:
         version = ModelVersion.objects.get(id=version_id)
         session = version.training_session
@@ -16,26 +19,25 @@ def train_model(self, version_id:str):
         # Start training
         session.status = "running"
         session.started_at = timezone.now()
-        session.save()
+        session.save(update_fields=["status", "started_at"])
 
-        # Simulated training steps
-        for i in range(10):
-            time.sleep(10)
-            session.progress = round((i + 1) * 10, 1)
-            session.logs +=  f"Epoch {i}: training in progress" + "\n"
-            session.save()
+        payload = {
+            "project_id": version.model.project.name,
+            "base_version": base_version,
+            "model_name": version.model.name,
+            "dataset_name": version.dataset_version.version_name,
+            "dataset_version": version.dataset_version.version_number,
+            "framework": version.model.framework.name,
+            "task": version.model.task.name,
+            "model_id": version.model.id,
+            "model_version_id": version.id,
+            "dataset_id": version.dataset_version.id,
+            "session_id": session.id,
+            "config": version.config or {}
+            }
 
-        # Simulate metrics and final state
-        version.metrics = {
-            "accuracy": 0.93,
-            "f1Score": 0.91
-        }
-        version.status = "trained"
-        version.save()
-
-        session.status = "completed"
-        session.completed_at = timezone.now()
-        session.save()
+        res = trigger_trainml_training(TrainML_API, payload)
+        return res
 
     except Exception as e:
         if "version" in locals():

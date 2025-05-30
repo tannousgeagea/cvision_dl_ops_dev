@@ -87,7 +87,7 @@ def get_model_by_id(model_id: str):
                 }
 
             versions.append({
-                "id": f"v{version.version}-{model.id}",
+                "id": f"{version.id}",
                 "versionNumber": int(version.version),
                 "createdAt": version.created_at,
                 "createdBy": version.created_by.email if version.created_by else "unknown",
