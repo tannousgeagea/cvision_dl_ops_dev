@@ -4,7 +4,8 @@ import django
 django.setup()
 from datetime import datetime
 from typing import Callable, Optional
-from fastapi import Request, Response, Header
+from users.models import CustomUser as User
+from fastapi import Request, Response, Header, Depends
 from fastapi import APIRouter, HTTPException
 from fastapi.routing import APIRoute
 from typing import List, Literal, Union
@@ -14,6 +15,7 @@ from projects.models import Version
 from ml_models.models import ModelVersion, Model
 from training.models import TrainingSession
 from event_api.tasks.train_model.core import train_model
+from data_reader.routers.auth.queries.dependencies import get_current_user
 
 class TimedRoute(APIRoute):
     def get_route_handler(self) -> Callable:
@@ -47,6 +49,7 @@ class TrainRequest(BaseModel):
 @router.post("/train")
 def trigger_training(
     body: TrainRequest,
+    user: User = Depends(get_current_user),
     x_request_id: Annotated[Optional[str], Header()] = None,
     ):
     try:
@@ -62,6 +65,7 @@ def trigger_training(
             dataset_version=dataset,
             config=body.config,
             status="training",
+            created_by=user
         )
 
         TrainingSession.objects.create(model_version=model_version, config=body.config, logs="Initiating Training Sessions \n")
