@@ -5,7 +5,7 @@ from typing import Callable, Optional
 from fastapi import Request, Response
 from fastapi import APIRouter, HTTPException
 from fastapi.routing import APIRoute
-from typing import List
+from typing import List, Dict
 from pydantic import BaseModel
 from django.utils.timezone import localtime
 from training.models import TrainingSession
@@ -43,6 +43,7 @@ class TrainingSessionOut(BaseModel):
     metrics: Optional[dict]
     configuration: Optional[dict]
     logs: Optional[List[str]]
+    metricsData: Optional[List[Dict]]
 
 @router.get("/training-sessions/{session_id}")
 def get_training_session(session_id: int) -> TrainingSessionOut:
@@ -67,7 +68,13 @@ def get_training_session(session_id: int) -> TrainingSessionOut:
                 progress=session.progress,
                 metrics=metrics,
                 configuration=session.config,
-                logs=session.logs.splitlines() if session.logs else []
+                logs=session.logs.splitlines() if session.logs else [],
+                metricsData=[
+                    {
+                        "epoch": i + 1,
+                        **met,
+                    } for i, met in enumerate(session.metrics)
+                ],
             )
     except TrainingSession.DoesNotExist:
         raise HTTPException(404, "Session not found")
