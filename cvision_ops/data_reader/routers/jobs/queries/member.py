@@ -7,7 +7,8 @@ from typing import Optional
 from fastapi import Path
 from data_reader.routers.auth.queries.dependencies import (
     user_project_access_dependency,
-    project_admin_or_org_admin_dependency
+    project_admin_or_org_admin_dependency,
+    project_edit_admin_or_org_admin_dependency,
 )
 
 router = APIRouter()
@@ -21,7 +22,7 @@ class ProjectMemberOut(BaseModel):
 @router.get("/projects/{project_id}/members", response_model=list[ProjectMemberOut])
 def get_project_members(
     project_id: str,
-    _membership=Depends(project_admin_or_org_admin_dependency)
+    _membership=Depends(project_edit_admin_or_org_admin_dependency)
 ):
     memberships = ProjectMembership.objects.filter(
         project__name=project_id

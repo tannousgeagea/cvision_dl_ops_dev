@@ -11,6 +11,7 @@ from fastapi import Request, Response
 from typing import Callable, Optional
 from data_reader.routers.auth.queries.dependencies import (
     user_project_access_dependency,
+    project_edit_admin_or_org_admin_dependency,
     project_admin_or_org_admin_dependency,
 )
 
@@ -52,7 +53,7 @@ class JobOut(BaseModel):
 @router.get("/projects/{project_id}/jobs", response_model=List[JobOut])
 def get_jobs_for_project(
     project_id: str,
-    _user=Depends(project_admin_or_org_admin_dependency),
+    _user=Depends(project_edit_admin_or_org_admin_dependency),
 ):
     try:
         jobs = Job.objects.filter(project__name=project_id).select_related("assignee")
