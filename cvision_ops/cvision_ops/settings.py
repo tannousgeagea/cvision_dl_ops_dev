@@ -148,6 +148,14 @@ if os.getenv('DJANGO_STORAGE', 'local') == "azure":
     }
 
 
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.office365.com"
+EMAIL_PORT = 587  # Or 465 for SSL
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "notification@wasteant.com"
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")  # Use an env variable!
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
