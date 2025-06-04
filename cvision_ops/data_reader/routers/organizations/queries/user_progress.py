@@ -21,7 +21,7 @@ router = APIRouter()
 @router.get("/organizations/{org_id}/progress")
 def fetch_user_progress(
     org_id: int,
-    # _membership=Depends(organization_access_dependency)
+    _membership=Depends(organization_access_dependency)
 ):
     memberships = OrganizationMembership.objects.filter(
         organization_id=org_id
