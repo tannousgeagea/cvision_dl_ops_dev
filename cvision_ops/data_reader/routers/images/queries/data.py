@@ -131,7 +131,6 @@ def list_tagged_images(
 
     for image in paginated:
         tags = [tag.tag.name for tag in image.image_tags.all()]
-        project_images = image.projects.all()
 
         if image.sensorbox:
             tags += [
@@ -140,16 +139,16 @@ def list_tagged_images(
                 image.sensorbox.sensor_box_location,
             ]
 
-        for proj_img in project_images:
-            results.append({
-                "id": image.image_id,
-                "name": image.image_name,
-                "src": image.image_file.url if image.image_file else "",
-                "tags":  tags,
-                "source":image.source_of_origin or "Unknown",
-                "date": image.created_at.strftime("%Y-%m-%d"),
-                "projectId": str(proj_img.project.id)
-            })
+        results.append({
+            "id": image.id,
+            "image_id": image.image_id,
+            "name": image.image_name,
+            "src": image.image_file.url if image.image_file else "",
+            "tags":  tags,
+            "source":image.source_of_origin or "Unknown",
+            "date": image.created_at.strftime("%Y-%m-%d"),
+            "projectId": None
+        })
 
     return {
         "total": total_count,
