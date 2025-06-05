@@ -67,7 +67,7 @@ def parse_query_list(query_list: List[str]) -> dict:
     "/images", methods=["GET"], tags=["Images"]
 )
 def list_tagged_images(
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     name: str = Query(None),
     source: str = Query(None),
@@ -107,7 +107,24 @@ def list_tagged_images(
     if "tag" in parsed_query:
         queryset = queryset.filter(image_tags__tag__name__icontains=parsed_query["tag"])
 
+    try:
+        if "created_at" in parsed_query:
+            queryset = queryset.filter(created_at=datetime.strptime(parsed_query["created_at"], "%Y-%m-%d"))
+        if "created_at__gte" in parsed_query:
+            queryset = queryset.filter(created_at__gte=datetime.strptime(parsed_query["created_at__gte"], "%Y-%m-%d"))
+        if "created_at__lte" in parsed_query:
+            queryset = queryset.filter(created_at__lte=datetime.strptime(parsed_query["created_at__lte"], "%Y-%m-%d"))
+        if "created_at__range" in parsed_query:
+            range_vals = parsed_query["created_at__range"].split(",")
+            if len(range_vals) == 2:
+                start = datetime.strptime(range_vals[0], "%Y-%m-%d")
+                end = datetime.strptime(range_vals[1], "%Y-%m-%d")
+                queryset = queryset.filter(created_at__range=(start, end))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format in query. Use YYYY-MM-DD or YYYY-MM-DD,YYYY-MM-DD")
 
+
+    queryset = queryset.distinct()
     total_count = queryset.count()
     paginated = queryset[offset:offset + limit]
     results = []
