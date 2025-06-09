@@ -20,7 +20,7 @@ def create_access_token(user_id: int):
         "exp": expire,
         "type": "access"
     }
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM), expire
 
 def create_refresh_token(user_id: int):
     expire = datetime.now(tz=timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
@@ -29,7 +29,7 @@ def create_refresh_token(user_id: int):
         "exp": expire,
         "type": "refresh"
     }
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM), expire
 
 router = APIRouter()
 
@@ -43,6 +43,7 @@ class LoginResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str
+    expires_at: str
 
 # Login API
 @router.post("/login", response_model=LoginResponse)
@@ -54,13 +55,14 @@ def login(data: LoginRequest):
     
     # Update last login
     update_last_login(None, user)
-    access_token = create_access_token(user.id)
-    refresh_token = create_refresh_token(user.id)
+    access_token, access_expiry  = create_access_token(user.id)
+    refresh_token, _ = create_refresh_token(user.id)
 
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
+        "expires_at": access_expiry.isoformat()
     }
 
 
@@ -86,11 +88,12 @@ def refresh_token(data: RefreshRequest):
     except CustomUser.DoesNotExist:
         raise HTTPException(status_code=404, detail="User not found")
 
-    new_access_token = create_access_token(user.id)
-    new_refresh_token = create_refresh_token(user.id)
+    new_access_token, access_expiry = create_access_token(user.id)
+    new_refresh_token, _ = create_refresh_token(user.id)
 
     return {
         "access_token": new_access_token,
         "refresh_token": new_refresh_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "expires_at": access_expiry.isoformat()
     }
