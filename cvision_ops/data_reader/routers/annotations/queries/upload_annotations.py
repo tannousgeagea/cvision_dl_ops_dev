@@ -110,7 +110,10 @@ def upload_raw_annotations(response: Response, request: ApiRequest = Depends()):
                 image=image,
                 project=project,
             )
-            
+        
+        if project_image.status in ["dataset", "reviewed"]:
+            return {"message": "No new annotation can be created - Image already in dataset !"}
+        
         success, results = save_annotations(data=request.data, project_image=project_image, annotation_type=annotation_type)
         if success:
             project_image.annotated = True
