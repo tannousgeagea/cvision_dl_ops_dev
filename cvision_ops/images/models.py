@@ -15,6 +15,8 @@ class Image(models.Model):
     source_of_origin = models.CharField(max_length=255, null=True, blank=True)
     meta_info = models.JSONField(null=True, blank=True)
     sensorbox = models.ForeignKey(SensorBox, on_delete=models.SET_NULL, null=True)  # New relationship
+    width = models.PositiveIntegerField(null=True, blank=True, help_text="Original width in pixels")
+    height = models.PositiveIntegerField(null=True, blank=True, help_text="Original height in pixels")
     tags = models.ManyToManyField(
         'Tag',
         through='ImageTag',
