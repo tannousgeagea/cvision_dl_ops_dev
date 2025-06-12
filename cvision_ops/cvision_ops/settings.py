@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'jobs',
     'ml_models',
     'training',
+    'inferences',
 ]
 
 MIDDLEWARE = [
@@ -585,6 +586,26 @@ UNFOLD = {
                             "admin:training_trainingsession_changelist"
                             ),
                     },  
+                ]  
+            },
+            {
+                "title": _("Inferences"),
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Prediction Results"),
+                        "icon": "batch_prediction",
+                        "link": reverse_lazy(
+                            "admin:inferences_predictionimageresult_changelist"
+                            ),
+                    },
+                    {
+                        "title": _("Prediction Overlay"),
+                        "icon": "shadow",
+                        "link": reverse_lazy(
+                            "admin:inferences_predictionoverlay_changelist"
+                            ),
+                    },   
                 ]  
             }
  
