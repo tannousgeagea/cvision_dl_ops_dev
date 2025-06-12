@@ -37,9 +37,10 @@ def save_annotations(
                 project_image=project_image,
                 annotation_type=annotation_type,
                 annotation_class=annotation_class,
-                data=coords[1:],
+                data=coords[1:5],
                 annotation_uid=f"{str(uuid.uuid4())}",
-                annotation_source="prediction"
+                annotation_source="prediction",
+                confidence=coords[-1] if len(coords) == 6 else None,
             )
             
             if created:
