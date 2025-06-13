@@ -9,18 +9,25 @@ from projects.models import ProjectImage
 
 router = APIRouter()
 
-def convert_bbox(bbox):
+def convert_bbox(bbox, width:int, height:int):
     """
     Convert normalized [x1, y1, x2, y2] to x, y, width, height in absolute pixels (assumes 1.0 if not scaled)
     """
     if not bbox or len(bbox) != 4:
         return None
     x1, y1, x2, y2 = bbox
+
+    if width is None:
+        width = 400
+    
+    if height is None:
+        height = 300
+
     return {
-        "x": int(x1 * 400),
-        "y": int(y1 * 300),
-        "width": int((x2 - x1) * 400),
-        "height": int((y2 - y1) * 300)
+        "x": int(x1 * width),
+        "y": int(y1 * height),
+        "width": int((x2 - x1) * width),
+        "height": int((y2 - y1) * height)
     }
 
 @router.get("/model-version/{model_version_id}/validation-images")
@@ -55,7 +62,7 @@ def get_validation_images(
         # Collect predictions
         prediction_boxes = [
             {
-                **convert_bbox(p.bbox),
+                **convert_bbox(p.bbox, width=image.width, height=image.height),
                 "label": p.class_label,
                 "confidence": p.confidence,
                 "type": "prediction"
@@ -72,7 +79,7 @@ def get_validation_images(
 
         ground_truth_boxes = [
             {
-                **convert_bbox(gt.data),
+                **convert_bbox(gt.data, width=image.width, height=image.height),
                 "label": gt.annotation_class.name,
                 "confidence": 1.0,
                 "type": "groundTruth"
@@ -88,6 +95,8 @@ def get_validation_images(
 
         results.append({
             "id": image.id,
+            "width": image.width,
+            "height": image.height,
             "original": image.image_file.url,  # or image.image_url if custom field
             "confidence": avg_conf,
             "boundingBoxes": all_boxes
