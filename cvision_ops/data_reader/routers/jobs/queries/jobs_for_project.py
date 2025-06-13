@@ -56,7 +56,7 @@ def get_jobs_for_project(
     _user=Depends(project_edit_admin_or_org_admin_dependency),
 ):
     try:
-        jobs = Job.objects.filter(project__name=project_id).select_related("assignee")
+        jobs = Job.objects.filter(project__name=project_id).select_related("assignee").order_by('-created_at')
     except Project.DoesNotExist:
         raise HTTPException(status_code=404, detail="Project not found")
 

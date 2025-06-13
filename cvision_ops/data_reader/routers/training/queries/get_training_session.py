@@ -44,6 +44,7 @@ class TrainingSessionOut(BaseModel):
     configuration: Optional[dict]
     logs: Optional[List[str]]
     metricsData: Optional[List[Dict]]
+    model_version: Optional[Dict]
 
 @router.get("/training-sessions/{session_id}")
 def get_training_session(session_id: int) -> TrainingSessionOut:
@@ -69,6 +70,10 @@ def get_training_session(session_id: int) -> TrainingSessionOut:
                 metrics=metrics,
                 configuration=session.config,
                 logs=session.logs.splitlines() if session.logs else [],
+                model_version={
+                    "id": mv.id,
+                    "version": mv.version,
+                },
                 metricsData=[
                     {
                         "epoch": i + 1,
