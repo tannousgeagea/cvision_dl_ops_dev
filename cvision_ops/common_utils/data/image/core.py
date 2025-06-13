@@ -19,6 +19,7 @@ from common_utils.data.integrity import validate_image_exists
 
 def compress_image(file, quality:int=65):
     image_file = PILImage.open(file.file)
+    img_size = image_file.size
     compressed_io = io.BytesIO()
     image_file.convert("RGB").save(
         compressed_io,
@@ -28,7 +29,7 @@ def compress_image(file, quality:int=65):
     )
 
     compressed_io.seek(0)
-    return compressed_io.read()
+    return compressed_io.read(), img_size
 
 def register_image_into_db(file, image_id:str=None, source=None, meta_info:dict=None):
     success = False
@@ -47,7 +48,7 @@ def register_image_into_db(file, image_id:str=None, source=None, meta_info:dict=
             
             return success, result, image
         
-        file_content = compress_image(file=file)
+        file_content, img_size = compress_image(file=file)
         image = Image(
             image_name=filename,
             image_id=image_id if image_id else str(uuid.uuid4()),
@@ -56,6 +57,7 @@ def register_image_into_db(file, image_id:str=None, source=None, meta_info:dict=
             sensorbox=SensorBox.objects.filter(sensor_box_name=source).first()
         )
         
+        image.width, image.height = img_size
         image.image_file.save(
             os.path.basename(file.filename), 
             ContentFile(file_content)
