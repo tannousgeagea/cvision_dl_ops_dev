@@ -65,7 +65,7 @@ def fetch_validation_metrics(
         pred_boxes = np.array([
             annotation_to_box(
                 xyxy=p.bbox,
-                class_id=p.class_id,
+                class_id=p.class_id if p.class_id is not None else classes.filter(name=p.class_label.lower()).first().class_id,
                 conf=p.confidence,
                 image_id=res.id,
             ) for p in res.overlays.all()
