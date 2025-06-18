@@ -48,7 +48,7 @@ def validate_model(
                 continue
 
             start_time  = time.time()
-            predictions = run_inference(image=image.image_file.name, model_version_id=model_version_id)
+            predictions = run_inference(image=image.image_file.name, model_version_id=model_version_id, confidence_threshold=0.01)
             inference_time = time.time() - start_time
 
             with transaction.atomic():
@@ -62,6 +62,7 @@ def validate_model(
                 overlay_objs = [
                     PredictionOverlay(
                         prediction_result=result,
+                        class_id=pred["class_id"],
                         class_label=pred["class_label"],
                         confidence=pred["confidence"],
                         bbox=pred.get("xyxyn"),

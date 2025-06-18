@@ -39,7 +39,7 @@ router = APIRouter(
 )
 
 @router.api_route(
-    "/infer/{model_version_id}", methods=["POST"], tags=["Analysis"]
+    "/infer/{model_version_id}", methods=["POST"],
     )
 async def infer(
     model_version_id:int,

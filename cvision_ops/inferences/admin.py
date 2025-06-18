@@ -13,7 +13,7 @@ class PredictionImageResultAdmin(ModelAdmin):
         'created_at',
     )
     list_filter = ('model_version', 'dataset_version')
-    search_fields = ('image__image_name', 'model_version__version', 'dataset_version__version_name')
+    search_fields = ('image__image_name', 'model_version__version', 'dataset_version__version_name', "id")
     readonly_fields = ('created_at',)
     date_hierarchy = 'created_at'
 

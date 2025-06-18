@@ -36,6 +36,7 @@ class PredictionOverlay(models.Model):
     prediction_result = models.ForeignKey(
         PredictionImageResult, on_delete=models.CASCADE, related_name="overlays"
     )
+    class_id = models.PositiveIntegerField(null=True, blank=True)
     class_label = models.CharField(max_length=255)
     confidence = models.FloatField(default=0.0)
     bbox = models.JSONField(
