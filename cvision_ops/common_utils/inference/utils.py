@@ -13,7 +13,7 @@ def run_inference(image:str, model_version_id:str, confidence_threshold:float=0.
         }
 
         params = {
-                "confidence_threshold": confidence_threshold,
+            "confidence_threshold": confidence_threshold,
         }
         response = requests.post(f"{REMOTE_INFERENCE_URL}/api/v1/infer/{model_version_id}", files=files, params=params)
    
