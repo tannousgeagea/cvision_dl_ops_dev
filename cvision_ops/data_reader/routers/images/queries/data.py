@@ -27,6 +27,9 @@ from tenants.models import (
     EdgeBox,
 )
 
+from django.db.models import Prefetch
+from annotations.models import Annotation
+
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 class TimedRoute(APIRoute):
@@ -81,6 +84,12 @@ def list_tagged_images(
         ).select_related("sensorbox__edge_box").order_by('-created_at')
     )
 
+    queryset = queryset.prefetch_related(
+        "image_tags__tag",
+        Prefetch("projects__annotations", queryset=Annotation.objects.filter(is_active=True).select_related("annotation_class")),
+        "projects__project"
+    ).select_related("sensorbox__edge_box")
+
     if name:
         queryset = queryset.filter(image_name__icontains=name)
 
@@ -106,6 +115,12 @@ def list_tagged_images(
 
     if "tag" in parsed_query:
         queryset = queryset.filter(image_tags__tag__name__icontains=parsed_query["tag"])
+
+    if "project" in parsed_query:
+        queryset = queryset.filter(projects__project__name__icontains=parsed_query["project"])
+
+    if "annotation_class" in parsed_query:
+        queryset = queryset.filter(projects__annotations__annotation_class__name__icontains=parsed_query["annotation_class"])
 
     try:
         if "created_at" in parsed_query:
@@ -139,6 +154,18 @@ def list_tagged_images(
                 image.sensorbox.sensor_box_location,
             ]
 
+        projects = []
+        annotation_classes = set()
+        for pi in image.projects.all():
+            projects.append({
+                "project_id": pi.project.id,
+                "project_name": pi.project.name,
+                "status": pi.status,
+            })
+
+            for ann in pi.annotations.all():
+                annotation_classes.add(ann.annotation_class.name)
+
         results.append({
             "id": image.id,
             "image_id": image.image_id,
@@ -147,7 +174,8 @@ def list_tagged_images(
             "tags":  tags,
             "source":image.source_of_origin or "Unknown",
             "date": image.created_at.strftime("%Y-%m-%d"),
-            "projectId": None
+            "projects": projects,
+            "annotation_classes": list(annotation_classes),
         })
 
     return {
