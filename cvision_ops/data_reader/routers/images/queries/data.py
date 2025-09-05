@@ -5,7 +5,7 @@ import time
 import django
 import shutil
 django.setup()
-from django.db.models import Q
+from django.db.models import Q, Count
 from datetime import datetime, timedelta
 from datetime import time as dtime
 from datetime import date, timezone
@@ -121,6 +121,14 @@ def list_tagged_images(
 
     if "annotation_class" in parsed_query:
         queryset = queryset.filter(projects__annotations__annotation_class__name__icontains=parsed_query["annotation_class"])
+
+    if "exclude_dataset" in parsed_query and parsed_query["exclude_dataset"].lower() == "true":
+        queryset = queryset.annotate(
+            dataset_status_count=Count(
+                'projects',
+                filter=Q(projects__status="dataset")
+            )
+        ).filter(dataset_status_count=0)
 
     try:
         if "created_at" in parsed_query:
