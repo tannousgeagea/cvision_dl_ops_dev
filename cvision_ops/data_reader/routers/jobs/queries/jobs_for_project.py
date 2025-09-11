@@ -2,7 +2,7 @@ import time
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Optional
 from pydantic import BaseModel
-from django.db.models import Count
+from django.db.models import Count, Q
 from users.models import CustomUser as User
 from projects.models import Project
 from jobs.models import Job
@@ -40,6 +40,12 @@ class AssignedUserOut(BaseModel):
     email: str
     avatar: Optional[str] = None
 
+class JobProgressOut(BaseModel):
+    total: int
+    annotated: int
+    reviewed: int
+    completed: int
+
 class JobOut(BaseModel):
     id: int
     name: str
@@ -49,6 +55,7 @@ class JobOut(BaseModel):
     assignedUser: Optional[AssignedUserOut] = None
     createdAt: str
     updatedAt: str
+    progress: JobProgressOut   # 👈 new field
 
 @router.get("/projects/{project_id}/jobs", response_model=List[JobOut])
 def get_jobs_for_project(
@@ -56,7 +63,17 @@ def get_jobs_for_project(
     _user=Depends(project_edit_admin_or_org_admin_dependency),
 ):
     try:
-        jobs = Job.objects.filter(project__name=project_id).select_related("assignee").order_by('-created_at')
+        jobs = (
+            Job.objects.filter(project__name=project_id)
+                .select_related("assignee")
+                .annotate(
+                    total=Count("images"),
+                    annotated=Count("images", filter=Q(images__project_image__status="annotated")),
+                    reviewed=Count("images", filter=Q(images__project_image__status="reviewed")),
+                    completed=Count("images", filter=Q(images__project_image__status="dataset")),
+                )
+                .order_by('-created_at')
+            )
     except Project.DoesNotExist:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -75,6 +92,12 @@ def get_jobs_for_project(
             ) if job.assignee else None,
             createdAt=job.created_at.isoformat(),
             updatedAt=job.updated_at.isoformat(),
+            progress=JobProgressOut(
+                total=job.total,
+                annotated=job.annotated,
+                reviewed=job.reviewed,
+                completed=job.completed,
+            )
         )
         for job in jobs
     ]
