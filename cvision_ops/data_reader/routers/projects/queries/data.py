@@ -20,12 +20,6 @@ from pathlib import Path
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-from tenants.models import (
-    Tenant,
-    EdgeBox,
-    Plant,
-    Domain,
-)
 
 from projects.models import (
     Project,
