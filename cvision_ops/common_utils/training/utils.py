@@ -33,7 +33,7 @@ def trigger_trainml_training(
         return response.json()
     
     except HTTPError as err:
-        raise e
+        raise err
     
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to trigger training on TrainML: {str(e)} (payload: {payload})")

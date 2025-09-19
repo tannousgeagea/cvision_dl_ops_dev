@@ -7,6 +7,8 @@ import yaml
 from io import StringIO
 import zipstream
 from PIL import Image
+import threading
+from queue import Queue
 from typing_extensions import Annotated
 from fastapi import APIRouter, HTTPException, Query, Header
 from fastapi.routing import APIRoute
@@ -148,6 +150,63 @@ def generate_zip_stream(version: Version, annotation_format: str, task_id:str):
 
     return z
 
+def generate_and_upload_streaming(version: Version, format: str, blob_client):
+    """Generate zip and upload simultaneously without storing locally"""
+    
+    class StreamingUploader:
+        def __init__(self, blob_client, chunk_size=8*1024*1024):  # 8MB chunks
+            self.blob_client = blob_client
+            self.chunk_size = chunk_size
+            self.buffer = io.BytesIO()
+            self.chunk_id = 0
+            self.block_ids = []
+            
+        def write(self, data):
+            self.buffer.write(data)
+            if self.buffer.tell() >= self.chunk_size:
+                self.flush_chunk()
+                
+        def flush_chunk(self):
+            if self.buffer.tell() == 0:
+                return
+                
+            self.buffer.seek(0)
+            block_id = f"{self.chunk_id:06d}"
+            
+            # Upload chunk with retry
+            for attempt in range(3):
+                try:
+                    self.blob_client.stage_block(
+                        block_id=block_id,
+                        data=self.buffer.read()
+                    )
+                    self.block_ids.append(block_id)
+                    break
+                except Exception as e:
+                    if attempt == 2:
+                        raise e
+                    time.sleep(2 ** attempt)
+            
+            self.buffer = io.BytesIO()
+            self.chunk_id += 1
+            print(f"Uploaded chunk {self.chunk_id}")
+            
+        def finalize(self):
+            self.flush_chunk()  # Upload any remaining data
+            if self.block_ids:
+                self.blob_client.commit_block_list(self.block_ids)
+    
+    uploader = StreamingUploader(blob_client)
+    zip_stream = generate_zip_stream(version, format, task_id="streaming")
+    
+    try:
+        for chunk in zip_stream:
+            uploader.write(chunk)
+        uploader.finalize()
+    except Exception as e:
+        print(f"Upload failed: {e}")
+        raise
+
 
 @router.get("/versions/{version_id}/download", tags=["Versions"])
 def download_version(
@@ -176,45 +235,23 @@ def download_version(
     
     task_id = x_request_id if x_request_id else str(uuid.uuid4())
     filename = f"{version.project.name}.v{version.version_number}.{format}.zip"
-    local_path = "/tmp/versions"
-    os.makedirs(local_path, exist_ok=True)
 
-    local_zip_path = f"versions/{filename}" if os.getenv("CACHE_ZIP_PATH") == "azure" else os.path.join(local_path, filename)
-    cached_zip_path = get_cached_zip_path(local_zip_path)
-    if cached_zip_path:
-        if os.getenv("CACHE_ZIP_PATH") == "azure":
-            return {"url": version.version_file.url}
-        else:
-            return FileResponse(
-                cached_zip_path,
-                media_type="application/zip",
-                filename=filename
-            )
+    # Check if already exists
+    version_zip_rel_path = f"versions/{filename}"
+    if default_storage.exists(version_zip_rel_path):
+        return {"url": default_storage.url(version_zip_rel_path)}
+
+    track_progress(task_id=task_id, percentage=0, status="Starting upload ... might take a while")
+    blob_client = default_storage.client.get_blob_client(
+        blob=version_zip_rel_path
+    )
     
-    track_progress(task_id=task_id, percentage=0, status="Zipping Files ...")
-    zip_stream = generate_zip_stream(version, annotation_format=format, task_id=task_id)
-    track_progress(task_id=task_id, percentage=100, status="Zipping Files Completed")
+    # Stream directly to Azure without local storage
+    generate_and_upload_streaming(version, format, blob_client)
+    
+    # Update version record
+    version.version_file = version_zip_rel_path
+    version.save(update_fields=["version_file"])
+    track_progress(task_id=task_id, percentage=100, status="Completed")
+    return {"url": version.version_file.url}
 
-    track_progress(task_id=task_id, percentage=0, status="Generating Zip file ... might take a while")
-    if os.getenv("CACHE_ZIP_PATH") == "azure":
-        version_zip_rel_path = f"versions/{filename}"
-        zip_buffer = io.BytesIO()
-        for chunk in zip_stream:
-            zip_buffer.write(chunk)
-        zip_buffer.seek(0)
-
-        zip_path = default_storage.save(version_zip_rel_path, ContentFile(zip_buffer.getvalue()))
-        version.version_file = zip_path
-        version.save(update_fields=["version_file"])
-        track_progress(task_id=task_id, percentage=100, status="Completed")
-        return {"url": version.version_file.url}
-    else:
-        with open(local_zip_path, "wb") as f:
-            for i, chunk in enumerate(zip_stream):
-                f.write(chunk)
-
-        track_progress(task_id=task_id, percentage=100, status="Completed")
-        return FileResponse(
-            local_zip_path,
-            media_type="application/zip",
-            filename=filename)
