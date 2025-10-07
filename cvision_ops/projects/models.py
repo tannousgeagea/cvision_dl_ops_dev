@@ -101,6 +101,7 @@ class ProjectImage(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='unannotated')
     added_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     job_assignment_status = models.CharField(
         max_length=20,
