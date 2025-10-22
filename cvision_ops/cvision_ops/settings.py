@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'ml_models',
     'training',
     'inferences',
+    'storage',
 ]
 
 MIDDLEWARE = [
@@ -327,6 +328,33 @@ UNFOLD = {
                         "icon": "domain",
                         "link": reverse_lazy(
                             "admin:organizations_organization_changelist"
+                            ),
+                    },
+                ],
+            },
+            {
+                "title": _("Storages"),
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Secret Ref"),
+                        "icon": "key",
+                        "link": reverse_lazy(
+                            "admin:storage_secretref_changelist"
+                            ),
+                    },
+                    {
+                        "title": _("Enctrypted Secrets"),
+                        "icon": "encrypted",
+                        "link": reverse_lazy(
+                            "admin:storage_encryptedsecret_changelist"
+                            ),
+                    },
+                    {
+                        "title": _("Storage Profile"),
+                        "icon": "cloud_lock",
+                        "link": reverse_lazy(
+                            "admin:storage_storageprofile_changelist"
                             ),
                     },
                 ],

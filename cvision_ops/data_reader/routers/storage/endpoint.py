@@ -11,7 +11,7 @@ from fastapi.routing import APIRoute
 
 QUERIES_DIR = os.path.dirname(__file__) + "/queries"
 QUERIES = [
-    f"data_reader.routers.auth.queries.{f.replace('/', '.')[:-3]}" 
+    f"data_reader.routers.storage.queries.{f.replace('/', '.')[:-3]}" 
     for f in os.listdir(QUERIES_DIR) 
     if f.endswith('.py') 
     if not f.endswith('__.py')
@@ -35,19 +35,12 @@ class TimedRoute(APIRoute):
 
 router = APIRouter(
     prefix="/api/v1",
+    tags=["Storages"],
     route_class=TimedRoute,
     responses={404: {"description": "Not found"}},
 )
 
 
-# from .queries.auth import router as auth_router
-from .queries.protected import router as protected_router
-# from .queries.me import router as me_router
-from .queries.auth_v2 import router as auth_router
-router.include_router(auth_router, tags=["Authentication"])
-# router.include_router(me_router, prefix="/users", tags=["Users"])
-router.include_router(protected_router, prefix="", tags=["Protected"])
-
-# for Q in QUERIES:
-#     module = importlib.import_module(Q)
-#     router.include_router(module.router)
+for Q in QUERIES:
+    module = importlib.import_module(Q)
+    router.include_router(module.router)
