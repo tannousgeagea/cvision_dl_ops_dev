@@ -157,7 +157,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "notification@wasteant.com"
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")  # Use an env variable!
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
+SECRET_ENCRYPTION_KEY = os.getenv("SECRET_ENCRYPTION_KEY")
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

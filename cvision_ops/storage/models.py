@@ -60,8 +60,7 @@ class SecretRef(models.Model):
     This model doesn't store actual credentials but references where
     they are stored in external secret management systems.
     """
-    id = models.UUIDField(
-        primary_key=True,
+    credential_ref_id = models.UUIDField(
         default=uuid.uuid4,
         editable=False
     )
@@ -179,8 +178,7 @@ class StorageProfile(models.Model):
     (e.g., raw data, processed data, models). One profile can be marked
     as default per organization.
     """
-    id = models.UUIDField(
-        primary_key=True,
+    storage_profile_id = models.UUIDField(
         default=uuid.uuid4,
         editable=False
     )

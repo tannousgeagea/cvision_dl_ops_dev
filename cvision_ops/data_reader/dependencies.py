@@ -130,6 +130,37 @@ async def get_current_user(
 
 
 # ============= Organization Dependencies =============
+@sync_to_async
+def fetch_organization_and_verify_membership(user: User, org_id: Optional[str], org_slug: Optional[str]) -> Organization:
+    """
+    Synchronous function to fetch organization and verify user membership.
+    """
+    try:
+        # Get organization
+        if org_id:
+            organization = Organization.objects.get(org_id=org_id)
+        else:
+            organization = Organization.objects.get(slug=org_slug)
+        
+        # Verify user is a member of this organization
+        try:
+            membership = OrganizationMembership.objects.get(
+                user=user,
+                organization=organization
+            )
+        except OrganizationMembership.DoesNotExist:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"User is not a member of organization '{organization.name}'"
+            )
+        
+        return organization
+        
+    except Organization.DoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Organization not found"
+        )
 
 async def get_current_organization(
     request: Request,
@@ -172,30 +203,11 @@ async def get_current_organization(
     
     try:
         # Get organization
-        if org_id:
-            organization = Organization.objects.get(org_id=org_id)
-        else:
-            organization = Organization.objects.get(slug=org_slug)
-        
-        # Verify user is a member of this organization
-        try:
-            membership = OrganizationMembership.objects.get(
-                user=user,
-                organization=organization
-            )
-        except OrganizationMembership.DoesNotExist:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"User is not a member of organization '{organization.name}'"
-            )
-        
-        return organization
-        
-    except Organization.DoesNotExist:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Organization not found"
+        organization = await fetch_organization_and_verify_membership(
+            user, org_id, org_slug
         )
+        return organization
+    
     except HTTPException:
         raise
     except Exception as e:
@@ -203,6 +215,23 @@ async def get_current_organization(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve organization"
+        )
+
+@sync_to_async
+def fetch_user_organization_role(user: User, organization: Organization) -> Role:
+    """
+    Synchronous function to get user's role in organization.
+    """
+    try:
+        membership = OrganizationMembership.objects.get(
+            user=user,
+            organization=organization
+        )
+        return membership.role
+    except OrganizationMembership.DoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User is not a member of this organization"
         )
 
 
@@ -220,17 +249,8 @@ async def get_user_organization_role(
     Returns:
         Role instance
     """
-    try:
-        membership = OrganizationMembership.objects.get(
-            user=user,
-            organization=organization
-        )
-        return membership.role
-    except OrganizationMembership.DoesNotExist:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User is not a member of this organization"
-        )
+    return await fetch_user_organization_role(user, organization)
+
 
 
 # ============= Permission Dependencies =============

@@ -125,14 +125,14 @@ class VisibilityAdmin(ModelAdmin):
     """Admin interface for visibility options."""
     
     list_display = [
-        'display_order',
+        # 'display_order',
         'name',
         'description_preview',
         'project_count',
         'created_at'
     ]
     
-    list_editable = ['display_order']
+    # list_editable = ['display_order']
     
     list_filter = [
         'created_at'

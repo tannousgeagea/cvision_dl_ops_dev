@@ -5,5 +5,5 @@ from unfold.admin import ModelAdmin
 
 @admin.register(Organization)
 class OrganizationAdmin(ModelAdmin):
-    list_display = ("id", "name", "created_at")
+    list_display = ("id", "org_id", "name", "created_at")
     search_fields = ("name",)

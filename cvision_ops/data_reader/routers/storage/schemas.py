@@ -5,6 +5,7 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime
 from pydantic import BaseModel, Field, validator
 from enum import Enum
+from uuid import UUID
 
 
 class StorageBackendEnum(str, Enum):
@@ -53,7 +54,8 @@ class SecretRefUpdate(BaseModel):
 
 class SecretRefResponse(BaseModel):
     """Schema for secret reference response."""
-    id: str
+    id: int
+    credential_ref_id: UUID
     provider: str
     path: str
     key: str
@@ -131,14 +133,15 @@ class StorageProfileUpdate(BaseModel):
 
 class StorageProfileResponse(BaseModel):
     """Schema for storage profile response."""
-    id: str
+    id: int
+    storage_profile_id: UUID
     name: str
     backend: str
     region: Optional[str]
     is_default: bool
     is_active: bool
     config: Dict[str, Any]
-    credential_ref_id: Optional[str]
+    credential_ref_id: Optional[int]
     created_at: datetime
     updated_at: datetime
 

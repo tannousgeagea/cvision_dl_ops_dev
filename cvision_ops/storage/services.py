@@ -400,6 +400,8 @@ def _retrieve_from_local_encrypted(secret_ref: SecretRef) -> Dict[str, Any]:
                 value = secret_data[secret_ref.key]
                 return value if isinstance(value, dict) else {'value': value}
             
+            
+            logging.info(secret_data)
             return secret_data if isinstance(secret_data, dict) else {'value': secret_data}
             
         except json.JSONDecodeError:
